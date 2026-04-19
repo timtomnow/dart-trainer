@@ -27,3 +27,12 @@ export const Session = z.object({
 });
 
 export type Session = z.infer<typeof Session>;
+
+export const CreateSessionInput = z.object({
+  gameModeId: z.string().min(1),
+  gameConfig: z.unknown(),
+  participants: z.array(Ulid).min(1),
+  startedAt: Iso8601.optional()
+});
+
+export type CreateSessionInput = z.infer<typeof CreateSessionInput>;

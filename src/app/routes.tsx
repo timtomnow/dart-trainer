@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { BootGate } from '@/app/BootGate';
+import { GameScreen } from '@/screens/game';
 import { HistoryScreen } from '@/screens/history';
 import { HomeScreen } from '@/screens/home';
 import { PlayScreen } from '@/screens/play';
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeScreen /> },
       { path: 'play', element: <PlayScreen /> },
+      { path: 'game/:sessionId', element: <GameScreen /> },
       { path: 'history', element: <HistoryScreen /> },
       { path: 'stats', element: <StatsScreen /> },
       { path: 'settings', element: <SettingsScreen /> }

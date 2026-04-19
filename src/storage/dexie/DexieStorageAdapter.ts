@@ -1,19 +1,33 @@
-import type { ListProfilesOptions, StorageAdapter, Unsubscribe } from '../adapter';
+import { Dexie } from 'dexie';
+import type {
+  ListProfilesOptions,
+  ListSessionsFilter,
+  StorageAdapter,
+  Unsubscribe
+} from '../adapter';
 import { DartTrainerDB } from './db';
 import { runMigrations } from './migrations';
+import { isInputEventType } from '@/domain/events';
 import { newId } from '@/domain/ids';
 import {
   APP_SETTINGS_ID,
   AppSettings,
   AppSettingsPatch,
   CreateProfileInput,
+  CreateSessionInput,
   CURRENT_SCHEMA_VERSION,
+  GameEvent,
   PlayerProfile,
-  ProfileName
+  ProfileName,
+  Session,
+  SessionStatus
 } from '@/domain/schemas';
 import type {
   AppSettings as AppSettingsType,
-  PlayerProfile as PlayerProfileType
+  GameEvent as GameEventType,
+  PlayerProfile as PlayerProfileType,
+  Session as SessionType,
+  SessionStatus as SessionStatusType
 } from '@/domain/types';
 
 export type DexieAdapterDeps = {
@@ -161,6 +175,101 @@ export class DexieStorageAdapter implements StorageAdapter {
     await this.db.appSettings.put(next);
     await this.emitAppSettings(next);
     await this.emitActiveProfile(next.activeProfileId);
+  }
+
+  async createSession(input: CreateSessionInput): Promise<SessionType> {
+    const parsed = CreateSessionInput.parse(input);
+    const now = this.nowIso();
+    const session = Session.parse({
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      id: this.genId(),
+      gameModeId: parsed.gameModeId,
+      gameConfig: parsed.gameConfig,
+      participants: parsed.participants,
+      status: 'in_progress',
+      startedAt: parsed.startedAt ?? now,
+      createdAt: now,
+      updatedAt: now
+    });
+    await this.db.sessions.put(session);
+    return session;
+  }
+
+  async getSession(id: string): Promise<SessionType | null> {
+    const raw = await this.db.sessions.get(id);
+    return raw ? Session.parse(raw) : null;
+  }
+
+  async listSessions(filter: ListSessionsFilter = {}): Promise<SessionType[]> {
+    const all = await this.db.sessions.orderBy('startedAt').reverse().toArray();
+    const parsed = all.map((s) => Session.parse(s));
+    if (!filter.status) return parsed;
+    const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
+    return parsed.filter((s) => statuses.includes(s.status));
+  }
+
+  async updateSessionStatus(id: string, status: SessionStatusType): Promise<SessionType> {
+    const parsedStatus = SessionStatus.parse(status);
+    const current = await this.db.sessions.get(id);
+    if (!current) throw new Error(`Session not found: ${id}`);
+    const parsedCurrent = Session.parse(current);
+    const next = Session.parse({
+      ...parsedCurrent,
+      status: parsedStatus,
+      updatedAt: this.nowIso(),
+      endedAt:
+        parsedStatus === 'completed' ||
+        parsedStatus === 'forfeited' ||
+        parsedStatus === 'abandoned'
+          ? this.nowIso()
+          : parsedCurrent.endedAt
+    });
+    await this.db.sessions.put(next);
+    return next;
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    await this.updateSessionStatus(id, 'deleted');
+  }
+
+  async appendEvent(event: GameEventType): Promise<GameEventType> {
+    const parsed = GameEvent.parse(event);
+    return this.db.transaction('rw', this.db.events, async () => {
+      const last = await this.db.events
+        .where('[sessionId+seq]')
+        .between([parsed.sessionId, 0], [parsed.sessionId, Dexie.maxKey])
+        .last();
+      const expectedSeq = last ? last.seq + 1 : 0;
+      if (parsed.seq !== expectedSeq) {
+        throw new Error(
+          `Non-monotonic event seq for session ${parsed.sessionId}: expected ${expectedSeq}, got ${parsed.seq}`
+        );
+      }
+      await this.db.events.put(parsed);
+      return parsed;
+    });
+  }
+
+  async listEvents(sessionId: string): Promise<GameEventType[]> {
+    const rows = await this.db.events
+      .where('[sessionId+seq]')
+      .between([sessionId, 0], [sessionId, Dexie.maxKey])
+      .toArray();
+    return rows.map((r) => GameEvent.parse(r));
+  }
+
+  async popLastInputEvent(sessionId: string): Promise<GameEventType | null> {
+    return this.db.transaction('rw', this.db.events, async () => {
+      const rows = await this.db.events
+        .where('[sessionId+seq]')
+        .between([sessionId, 0], [sessionId, Dexie.maxKey])
+        .reverse()
+        .toArray();
+      const target = rows.find((r) => isInputEventType(r.type));
+      if (!target) return null;
+      await this.db.events.delete(target.id);
+      return GameEvent.parse(target);
+    });
   }
 
   subscribeAppSettings(cb: AppSettingsListener): Unsubscribe {

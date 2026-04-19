@@ -6,6 +6,7 @@ export type {
   ProfilePreferences,
   Session,
   SessionStatus,
+  CreateSessionInput,
   Leg,
   Turn,
   Throw,
