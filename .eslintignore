@@ -1,0 +1,9 @@
+dist
+dev-dist
+node_modules
+coverage
+playwright-report
+test-results
+*.config.ts
+*.config.cjs
+scripts
