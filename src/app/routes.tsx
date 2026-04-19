@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { BootGate } from '@/app/BootGate';
 import { HistoryScreen } from '@/screens/history';
 import { HomeScreen } from '@/screens/home';
 import { PlayScreen } from '@/screens/play';
@@ -9,7 +10,11 @@ import { AppShell } from '@/ui/shell/AppShell';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <BootGate>
+        <AppShell />
+      </BootGate>
+    ),
     children: [
       { index: true, element: <HomeScreen /> },
       { path: 'play', element: <PlayScreen /> },

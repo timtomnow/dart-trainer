@@ -18,9 +18,8 @@
     "resolveJsonModule": true,
     "useDefineForClassFields": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["vite/client", "@testing-library/jest-dom"]
   },

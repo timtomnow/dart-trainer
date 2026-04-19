@@ -1,0 +1,31 @@
+{
+  "appSettings": [
+    {
+      "schemaVersion": 1,
+      "id": "app",
+      "appVersion": "1.0.0",
+      "activeProfileId": "01JARVQZAAAAAAAAAAAAAAAAAA",
+      "firstLaunchAt": "2026-04-18T10:00:00.000Z",
+      "updatedAt": "2026-04-18T10:00:00.000Z"
+    }
+  ],
+  "profiles": [
+    {
+      "schemaVersion": 1,
+      "id": "01JARVQZAAAAAAAAAAAAAAAAAA",
+      "name": "Tom",
+      "handedness": "right",
+      "archived": false,
+      "createdAt": "2026-04-18T10:00:00.000Z",
+      "updatedAt": "2026-04-18T10:00:00.000Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "01JARVQZBBBBBBBBBBBBBBBBBB",
+      "name": "Jane",
+      "archived": true,
+      "createdAt": "2026-04-18T10:05:00.000Z",
+      "updatedAt": "2026-04-18T10:15:00.000Z"
+    }
+  ]
+}

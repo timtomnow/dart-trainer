@@ -1,3 +1,4 @@
+import { ProfilesSection } from './ProfilesSection';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
 
 const THEMES: ReadonlyArray<Theme> = ['light', 'dark', 'system'];
@@ -37,6 +38,8 @@ export function SettingsScreen() {
           })}
         </div>
       </div>
+
+      <ProfilesSection />
     </section>
   );
 }
