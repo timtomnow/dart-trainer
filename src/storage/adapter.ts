@@ -17,6 +17,9 @@ export type ListProfilesOptions = {
 
 export type ListSessionsFilter = {
   status?: SessionStatus | SessionStatus[];
+  gameModeId?: string;
+  since?: string;
+  until?: string;
 };
 
 export interface StorageAdapter {

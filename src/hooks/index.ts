@@ -6,4 +6,5 @@ export {
   type UseProfilesResult
 } from './useProfiles';
 export { useActiveSession, type UseActiveSessionResult } from './useActiveSession';
-export { useSessions, type UseSessionsResult } from './useSessions';
+export { useSessions, type UseSessionsResult, type ListSessionsFilter } from './useSessions';
+export { useSessionEvents, type UseSessionEventsResult } from './useSessionEvents';

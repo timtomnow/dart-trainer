@@ -202,10 +202,21 @@ export class DexieStorageAdapter implements StorageAdapter {
 
   async listSessions(filter: ListSessionsFilter = {}): Promise<SessionType[]> {
     const all = await this.db.sessions.orderBy('startedAt').reverse().toArray();
-    const parsed = all.map((s) => Session.parse(s));
-    if (!filter.status) return parsed;
-    const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
-    return parsed.filter((s) => statuses.includes(s.status));
+    let parsed = all.map((s) => Session.parse(s));
+    if (filter.status) {
+      const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
+      parsed = parsed.filter((s) => statuses.includes(s.status));
+    }
+    if (filter.gameModeId) {
+      parsed = parsed.filter((s) => s.gameModeId === filter.gameModeId);
+    }
+    if (filter.since) {
+      parsed = parsed.filter((s) => s.startedAt >= filter.since!);
+    }
+    if (filter.until) {
+      parsed = parsed.filter((s) => s.startedAt <= filter.until!);
+    }
+    return parsed;
   }
 
   async updateSessionStatus(id: string, status: SessionStatusType): Promise<SessionType> {

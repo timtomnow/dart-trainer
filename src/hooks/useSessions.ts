@@ -3,6 +3,8 @@ import { useStorage } from '@/app/providers/StorageProvider';
 import type { CreateSessionInput, Session, SessionStatus } from '@/domain/types';
 import type { ListSessionsFilter } from '@/storage/adapter';
 
+export type { ListSessionsFilter };
+
 export type UseSessionsResult = {
   sessions: Session[];
   loading: boolean;
@@ -16,16 +18,19 @@ export function useSessions(filter: ListSessionsFilter = {}): UseSessionsResult 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const statusKey = Array.isArray(filter.status)
-    ? filter.status.join(',')
-    : (filter.status ?? '');
+  const filterKey = [
+    Array.isArray(filter.status) ? filter.status.join(',') : (filter.status ?? ''),
+    filter.gameModeId ?? '',
+    filter.since ?? '',
+    filter.until ?? ''
+  ].join('|');
 
   const refresh = useCallback(async () => {
     const next = await adapter.listSessions(filter);
     setSessions(next);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adapter, statusKey]);
+  }, [adapter, filterKey]);
 
   useEffect(() => {
     void refresh();
