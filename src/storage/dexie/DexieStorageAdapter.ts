@@ -5,7 +5,6 @@ import type {
   StorageAdapter,
   Unsubscribe
 } from '../adapter';
-import type { BackupData } from '@/domain/types';
 import { DartTrainerDB } from './db';
 import { runMigrations } from './migrations';
 import { isInputEventType } from '@/domain/events';
@@ -24,6 +23,7 @@ import {
   SessionStatus
 } from '@/domain/schemas';
 import type {
+  BackupData,
   AppSettings as AppSettingsType,
   GameEvent as GameEventType,
   PlayerProfile as PlayerProfileType,

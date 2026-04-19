@@ -1,5 +1,5 @@
-import type { StorageAdapter } from '@/storage/adapter';
 import { buildManifest } from './manifest';
+import type { StorageAdapter } from '@/storage/adapter';
 
 export async function exportBackup(adapter: StorageAdapter, appVersion: string): Promise<void> {
   const manifest = await buildManifest(adapter, appVersion);

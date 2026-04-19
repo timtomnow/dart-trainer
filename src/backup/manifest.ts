@@ -1,6 +1,6 @@
+import { CURRENT_BACKUP_SCHEMA_VERSION } from './migrations';
 import type { BackupData, BackupManifest } from '@/domain/types';
 import type { StorageAdapter } from '@/storage/adapter';
-import { CURRENT_BACKUP_SCHEMA_VERSION } from './migrations';
 
 function canonicalJson(val: unknown): string {
   return JSON.stringify(val, (_key, v: unknown) => {

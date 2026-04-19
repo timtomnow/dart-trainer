@@ -1,9 +1,9 @@
 import { z } from 'zod';
+import { computeContentHash } from './manifest';
+import { CURRENT_BACKUP_SCHEMA_VERSION, migrateBackupData } from './migrations';
 import { BackupManifest } from '@/domain/schemas';
 import type { BackupManifest as BackupManifestType } from '@/domain/types';
 import type { StorageAdapter } from '@/storage/adapter';
-import { computeContentHash } from './manifest';
-import { CURRENT_BACKUP_SCHEMA_VERSION, migrateBackupData } from './migrations';
 
 export type ImportResult = {
   profiles: number;

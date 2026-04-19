@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildManifest, computeContentHash } from '@/backup/manifest';
 import { applyManifest, importBackup, validateBackupFile } from '@/backup/import';
-import { DartTrainerDB, DexieStorageAdapter } from '@/storage/dexie';
+import { buildManifest, computeContentHash } from '@/backup/manifest';
 import type { BackupManifest } from '@/domain/types';
+import { DartTrainerDB, DexieStorageAdapter } from '@/storage/dexie';
 
 function makeAdapter() {
   const db = new DartTrainerDB(`backup_test_${Math.random().toString(36).slice(2)}`);

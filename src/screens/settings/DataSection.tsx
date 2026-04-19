@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { useBackup } from '@/hooks/useBackup';
 import type { ImportResult } from '@/backup/import';
 import type { BackupManifest } from '@/domain/types';
+import { useBackup } from '@/hooks/useBackup';
 
 type PendingImport = {
   manifest: BackupManifest;
