@@ -1,7 +1,7 @@
+import type { X01SessionStats } from './types';
 import type { GameEvent, Session } from '@/domain/types';
 import type { X01Config } from '@/games/x01/config';
 import { buildX01State } from '@/games/x01/replay';
-import type { X01SessionStats } from './types';
 
 type SessionShape = Pick<Session, 'id' | 'participants' | 'startedAt'>;
 

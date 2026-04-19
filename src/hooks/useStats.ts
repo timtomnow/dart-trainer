@@ -102,7 +102,6 @@ export function useStats(profileId: string | null): UseStatsResult {
       const cacheKey = sessionCacheKey(session.id);
       const cached = await adapter.getDerivedStats('session', cacheKey);
 
-      let stats: X01SessionStats;
       if (!isCacheStale(cached, seqMax) && cached) {
         const fromCache = statsFromRecord(cached);
         if (fromCache) {
@@ -111,7 +110,7 @@ export function useStats(profileId: string | null): UseStatsResult {
         }
       }
 
-      stats = computeSessionStats(events, config, session);
+      const stats = computeSessionStats(events, config, session);
       pairs.push({ session, stats });
       void adapter.putDerivedStats(statsToRecord(session.id, seqMax, stats));
     }

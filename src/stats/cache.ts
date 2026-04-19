@@ -1,5 +1,5 @@
-import type { DerivedStats } from '@/domain/types';
 import type { X01SessionStats } from './types';
+import type { DerivedStats } from '@/domain/types';
 
 export function sessionCacheKey(sessionId: string): string {
   return sessionId;
