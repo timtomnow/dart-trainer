@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DartTrainerDB, DB_CURRENT_VERSION, DexieStorageAdapter } from '@/storage/dexie';
 
 describe('Dexie DB v1 → v2 upgrade', () => {
+  // Note: DB_CURRENT_VERSION tracks the latest Dexie schema version (v3 as of M6).
   let db: DartTrainerDB | null = null;
   let legacyDb: Dexie | null = null;
 
@@ -17,11 +18,11 @@ describe('Dexie DB v1 → v2 upgrade', () => {
     }
   });
 
-  it('bumps DB_CURRENT_VERSION to 2', () => {
-    expect(DB_CURRENT_VERSION).toBe(2);
+  it('bumps DB_CURRENT_VERSION to 3', () => {
+    expect(DB_CURRENT_VERSION).toBe(3);
   });
 
-  it('opens an existing v1 database and exposes empty sessions + events stores', async () => {
+  it('opens an existing v1 database and exposes empty sessions, events, and derivedStats stores', async () => {
     const name = `upgrade_${Math.random().toString(36).slice(2)}`;
 
     legacyDb = new Dexie(name);
@@ -45,9 +46,10 @@ describe('Dexie DB v1 → v2 upgrade', () => {
     const adapter = new DexieStorageAdapter({ db, appVersion: '0.0.0-test' });
     await adapter.init();
 
-    expect(db.verno).toBe(2);
+    expect(db.verno).toBe(3);
     expect(await db.sessions.count()).toBe(0);
     expect(await db.events.count()).toBe(0);
+    expect(await db.derivedStats.count()).toBe(0);
 
     const settings = await adapter.getAppSettings();
     expect(settings?.firstLaunchAt).toBe('2026-04-18T12:00:00.000Z');

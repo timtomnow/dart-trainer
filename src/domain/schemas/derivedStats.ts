@@ -14,7 +14,8 @@ export const DerivedStats = z.object({
   count180: z.number().int().nonnegative().optional(),
   doublesHitPct: z.number().min(0).max(1).optional(),
   firstNineAvg: z.number().optional(),
-  computedAt: Iso8601.optional()
+  computedAt: Iso8601.optional(),
+  data: z.record(z.string(), z.unknown()).optional()
 });
 
 export type DerivedStats = z.infer<typeof DerivedStats>;

@@ -4,6 +4,8 @@ import type {
   BackupData,
   CreateProfileInput,
   CreateSessionInput,
+  DerivedStats,
+  DerivedStatsScope,
   GameEvent,
   PlayerProfile,
   Session,
@@ -21,6 +23,7 @@ export type ListSessionsFilter = {
   gameModeId?: string;
   since?: string;
   until?: string;
+  participantId?: string;
 };
 
 export interface StorageAdapter {
@@ -46,6 +49,9 @@ export interface StorageAdapter {
   appendEvent(event: GameEvent): Promise<GameEvent>;
   listEvents(sessionId: string): Promise<GameEvent[]>;
   popLastInputEvent(sessionId: string): Promise<GameEvent | null>;
+
+  getDerivedStats(scope: DerivedStatsScope, key: string): Promise<DerivedStats | null>;
+  putDerivedStats(stats: DerivedStats): Promise<void>;
 
   replaceAllData(data: BackupData): Promise<void>;
 

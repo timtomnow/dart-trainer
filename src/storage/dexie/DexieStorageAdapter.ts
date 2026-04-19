@@ -16,6 +16,7 @@ import {
   CreateProfileInput,
   CreateSessionInput,
   CURRENT_SCHEMA_VERSION,
+  DerivedStats,
   GameEvent,
   PlayerProfile,
   ProfileName,
@@ -25,6 +26,8 @@ import {
 import type {
   BackupData,
   AppSettings as AppSettingsType,
+  DerivedStats as DerivedStatsType,
+  DerivedStatsScope,
   GameEvent as GameEventType,
   PlayerProfile as PlayerProfileType,
   Session as SessionType,
@@ -217,6 +220,10 @@ export class DexieStorageAdapter implements StorageAdapter {
     if (filter.until) {
       parsed = parsed.filter((s) => s.startedAt <= filter.until!);
     }
+    if (filter.participantId) {
+      const pid = filter.participantId;
+      parsed = parsed.filter((s) => s.participants.includes(pid));
+    }
     return parsed;
   }
 
@@ -284,19 +291,31 @@ export class DexieStorageAdapter implements StorageAdapter {
     });
   }
 
+  async getDerivedStats(scope: DerivedStatsScope, key: string): Promise<DerivedStatsType | null> {
+    const raw = await this.db.derivedStats.get([scope, key]);
+    return raw ? DerivedStats.parse(raw) : null;
+  }
+
+  async putDerivedStats(stats: DerivedStatsType): Promise<void> {
+    const parsed = DerivedStats.parse(stats);
+    await this.db.derivedStats.put(parsed);
+  }
+
   async replaceAllData(data: BackupData): Promise<void> {
     await this.db.transaction(
       'rw',
-      [this.db.appSettings, this.db.profiles, this.db.sessions, this.db.events],
+      [this.db.appSettings, this.db.profiles, this.db.sessions, this.db.events, this.db.derivedStats],
       async () => {
         await this.db.appSettings.clear();
         await this.db.profiles.clear();
         await this.db.sessions.clear();
         await this.db.events.clear();
+        await this.db.derivedStats.clear();
         if (data.settings) await this.db.appSettings.put(data.settings);
         if (data.profiles.length) await this.db.profiles.bulkPut(data.profiles);
         if (data.sessions.length) await this.db.sessions.bulkPut(data.sessions);
         if (data.events.length) await this.db.events.bulkPut(data.events);
+        if (data.derivedStats.length) await this.db.derivedStats.bulkPut(data.derivedStats);
       }
     );
     const settings = data.settings ?? null;
