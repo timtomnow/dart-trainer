@@ -5,6 +5,7 @@ import type {
   StorageAdapter,
   Unsubscribe
 } from '../adapter';
+import type { BackupData } from '@/domain/types';
 import { DartTrainerDB } from './db';
 import { runMigrations } from './migrations';
 import { isInputEventType } from '@/domain/events';
@@ -281,6 +282,27 @@ export class DexieStorageAdapter implements StorageAdapter {
       await this.db.events.delete(target.id);
       return GameEvent.parse(target);
     });
+  }
+
+  async replaceAllData(data: BackupData): Promise<void> {
+    await this.db.transaction(
+      'rw',
+      [this.db.appSettings, this.db.profiles, this.db.sessions, this.db.events],
+      async () => {
+        await this.db.appSettings.clear();
+        await this.db.profiles.clear();
+        await this.db.sessions.clear();
+        await this.db.events.clear();
+        if (data.settings) await this.db.appSettings.put(data.settings);
+        if (data.profiles.length) await this.db.profiles.bulkPut(data.profiles);
+        if (data.sessions.length) await this.db.sessions.bulkPut(data.sessions);
+        if (data.events.length) await this.db.events.bulkPut(data.events);
+      }
+    );
+    const settings = data.settings ?? null;
+    await this.emitAppSettings(settings);
+    await this.emitProfiles();
+    await this.emitActiveProfile(settings?.activeProfileId ?? null);
   }
 
   subscribeAppSettings(cb: AppSettingsListener): Unsubscribe {

@@ -15,6 +15,7 @@ export const BackupCounts = z.object({
   derivedStats: z.number().int().nonnegative(),
   drills: z.number().int().nonnegative()
 });
+export type BackupCounts = z.infer<typeof BackupCounts>;
 
 export const BackupData = z.object({
   settings: AppSettings.nullable(),
@@ -25,15 +26,15 @@ export const BackupData = z.object({
   derivedStats: z.array(DerivedStats),
   drills: z.array(z.unknown())
 });
+export type BackupData = z.infer<typeof BackupData>;
 
 export const BackupManifest = z.object({
   schemaVersion: SchemaVersion,
   appVersion: z.string().min(1),
   exportedAt: Iso8601,
-  deviceLabel: z.string().min(1),
+  deviceLabel: z.string().min(1).optional(),
   contentHash: z.string().min(1),
   counts: BackupCounts,
   data: BackupData
 });
-
 export type BackupManifest = z.infer<typeof BackupManifest>;

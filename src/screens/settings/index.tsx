@@ -1,3 +1,4 @@
+import { DataSection } from './DataSection';
 import { ProfilesSection } from './ProfilesSection';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
 
@@ -40,6 +41,8 @@ export function SettingsScreen() {
       </div>
 
       <ProfilesSection />
+
+      <DataSection />
     </section>
   );
 }

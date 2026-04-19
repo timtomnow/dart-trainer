@@ -1,6 +1,7 @@
 import type {
   AppSettings,
   AppSettingsPatch,
+  BackupData,
   CreateProfileInput,
   CreateSessionInput,
   GameEvent,
@@ -45,6 +46,8 @@ export interface StorageAdapter {
   appendEvent(event: GameEvent): Promise<GameEvent>;
   listEvents(sessionId: string): Promise<GameEvent[]>;
   popLastInputEvent(sessionId: string): Promise<GameEvent | null>;
+
+  replaceAllData(data: BackupData): Promise<void>;
 
   subscribeAppSettings(cb: (settings: AppSettings | null) => void): Unsubscribe;
   subscribeProfiles(

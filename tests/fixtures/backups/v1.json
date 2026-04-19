@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "appVersion": "0.0.0-test",
+  "exportedAt": "2026-04-19T10:00:00.000Z",
+  "contentHash": "PLACEHOLDER",
+  "counts": {
+    "profiles": 1,
+    "profilePrefs": 0,
+    "sessions": 0,
+    "events": 0,
+    "derivedStats": 0,
+    "drills": 0
+  },
+  "data": {
+    "settings": null,
+    "profiles": [
+      {
+        "schemaVersion": 1,
+        "id": "01JARVQZAAAAAAAAAAAAAAAAAA",
+        "name": "Alice",
+        "archived": false,
+        "createdAt": "2026-04-19T10:00:00.000Z",
+        "updatedAt": "2026-04-19T10:00:00.000Z"
+      }
+    ],
+    "profilePrefs": [],
+    "sessions": [],
+    "events": [],
+    "derivedStats": [],
+    "drills": []
+  }
+}

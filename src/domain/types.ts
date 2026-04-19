@@ -16,5 +16,7 @@ export type {
   DerivedStats,
   DerivedStatsScope,
   BackupManifest,
+  BackupData,
+  BackupCounts,
   Handedness
 } from './schemas';
