@@ -9,6 +9,7 @@ type Props = {
   stats: X01LegStats;
   onEndSession: () => void;
   onPlayAgain: () => Promise<void>;
+  onUndo?: () => void;
 };
 
 function fmt(n: number): string {
@@ -26,7 +27,8 @@ export function X01SessionEndModal({
   config,
   stats,
   onEndSession,
-  onPlayAgain
+  onPlayAgain,
+  onUndo
 }: Props) {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,13 +88,23 @@ export function X01SessionEndModal({
         )}
 
         <div className="mt-5 flex gap-3">
+          {onUndo && (
+            <button
+              type="button"
+              onClick={onUndo}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              data-testid="x01-undo"
+            >
+              Undo
+            </button>
+          )}
           <button
             type="button"
             onClick={onEndSession}
             className="flex-1 rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            data-testid="x01-end-session"
+            data-testid="x01-quit"
           >
-            End Session
+            Quit
           </button>
           <button
             type="button"
