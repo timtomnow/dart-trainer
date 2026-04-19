@@ -13,54 +13,48 @@ export function X01TurnStrip({ view }: Props) {
   const { currentTurn, lastClosedTurn } = view;
   const slots = [0, 1, 2] as const;
   return (
-    <div className="mt-4">
-      <div
-        className="grid grid-cols-3 gap-2 text-center"
-        aria-label="Current turn darts"
-        data-testid="x01-current-turn"
-      >
+    <div className="mt-3" aria-label="Current turn darts" data-testid="x01-current-turn">
+      <div className="grid grid-cols-4 gap-1.5">
         {slots.map((i) => {
           const dart = currentTurn.darts[i];
           return (
             <div
               key={i}
-              className="rounded-md border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="rounded border border-slate-200 bg-white px-1.5 py-1.5 text-center text-xs dark:border-slate-700 dark:bg-slate-900"
               data-testid={`x01-dart-${i}`}
             >
-              <div className="text-xs text-slate-500 dark:text-slate-400">Dart {i + 1}</div>
-              <div className="mt-1 font-semibold tabular-nums">
-                {dart ? formatDart(dart) : '—'}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {dart ? `+${dart.scored}` : ''}
+              <div className="text-slate-500 dark:text-slate-400">D{i + 1}</div>
+              <div className="font-semibold tabular-nums">{dart ? formatDart(dart) : '—'}</div>
+              <div className="text-slate-500 dark:text-slate-400">
+                {dart ? `+${dart.scored}` : '\u00a0'}
               </div>
             </div>
           );
         })}
-      </div>
-      <div className="mt-2 flex items-center justify-between text-sm">
-        <span className="text-slate-500 dark:text-slate-400">
-          Turn total:{' '}
-          <span className="font-semibold tabular-nums" data-testid="x01-turn-scored">
+        <div className="rounded border border-slate-200 bg-slate-50 px-1.5 py-1.5 text-center text-xs dark:border-slate-700 dark:bg-slate-800">
+          <div className="text-slate-500 dark:text-slate-400">Turn</div>
+          <div className="font-semibold tabular-nums" data-testid="x01-turn-scored">
             {currentTurn.scored}
-          </span>
-          {currentTurn.bust && (
-            <span className="ml-2 rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+          </div>
+          {currentTurn.bust ? (
+            <div className="rounded bg-red-600 px-1 text-[10px] font-semibold text-white">
               BUST
-            </span>
+            </div>
+          ) : (
+            <div className="text-slate-500 dark:text-slate-400">{'\u00a0'}</div>
           )}
-        </span>
-        {lastClosedTurn && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            Last turn:{' '}
-            {lastClosedTurn.bust
-              ? 'bust'
-              : lastClosedTurn.checkout
-                ? `out +${lastClosedTurn.scored}`
-                : `+${lastClosedTurn.scored}`}
-          </span>
-        )}
+        </div>
       </div>
+      {lastClosedTurn && (
+        <div className="mt-1 text-right text-xs text-slate-500 dark:text-slate-400">
+          Last:{' '}
+          {lastClosedTurn.bust
+            ? 'bust'
+            : lastClosedTurn.checkout
+              ? `out +${lastClosedTurn.scored}`
+              : `+${lastClosedTurn.scored}`}
+        </div>
+      )}
     </div>
   );
 }

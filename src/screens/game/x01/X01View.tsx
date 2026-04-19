@@ -1,17 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X01Keypad } from './X01Keypad';
+import { X01LegEndModal } from './X01LegEndModal';
 import { X01ScoreHeader } from './X01ScoreHeader';
+import { X01SessionEndModal } from './X01SessionEndModal';
 import { X01TurnStrip } from './X01TurnStrip';
-import type { Session, ThrowSegment } from '@/domain/types';
-import type { X01Action, X01ViewModel } from '@/games/x01';
+import type { ThrowSegment } from '@/domain/types';
+import type { X01Action, X01LegStats, X01ViewModel } from '@/games/x01';
 
 type Props = {
-  session: Session;
   view: X01ViewModel;
   dispatch: (action: X01Action) => Promise<void>;
   undo: () => Promise<void>;
   forfeit: (participantId: string) => Promise<void>;
+  onPlayAgain: () => Promise<void>;
+};
+
+type LegEndData = {
+  completedLegNumber: number;
+  legsWon: Record<string, number>;
+  stats: X01LegStats;
+};
+
+type SessionEndData = {
+  stats: X01LegStats;
 };
 
 function formatAvg(n: number): string {
@@ -26,9 +38,41 @@ function formatFirstNine(n: number | null): string {
   return n === null ? '—' : n.toFixed(2);
 }
 
-export function X01View({ session, view, dispatch, undo, forfeit }: Props) {
+export function X01View({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [legEndData, setLegEndData] = useState<LegEndData | null>(null);
+  const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
+
+  const prevLegIndexRef = useRef(view.legIndex);
+  const prevStatusRef = useRef(view.status);
+  const prevLegStatsRef = useRef<X01LegStats>(view.legStats);
+
+  useEffect(() => {
+    const prevLegIndex = prevLegIndexRef.current;
+    const prevStatus = prevStatusRef.current;
+    const capturedStats = prevLegStatsRef.current;
+
+    if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
+      setSessionEndData({ stats: capturedStats });
+    } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
+      setSessionEndData(null);
+    }
+
+    if (view.legIndex > prevLegIndex && view.status === 'in_progress') {
+      setLegEndData({
+        completedLegNumber: prevLegIndex + 1,
+        legsWon: view.legsWon,
+        stats: capturedStats
+      });
+    } else if (view.legIndex < prevLegIndex) {
+      setLegEndData(null);
+    }
+
+    prevLegIndexRef.current = view.legIndex;
+    prevStatusRef.current = view.status;
+    prevLegStatsRef.current = view.legStats;
+  }, [view]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -50,12 +94,15 @@ export function X01View({ session, view, dispatch, undo, forfeit }: Props) {
     );
 
   const isOver = view.status !== 'in_progress';
+  const won = view.legsWon[view.activeParticipantId] ?? 0;
 
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-semibold">X01</h1>
-        <span className="text-sm text-slate-500 dark:text-slate-400">{session.gameModeId}</span>
+        <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="x01-legs">
+          Leg {view.legIndex + 1} · Won {won}/{view.config.legsToWin}
+        </span>
       </div>
 
       <div className="mt-4">
@@ -63,6 +110,8 @@ export function X01View({ session, view, dispatch, undo, forfeit }: Props) {
       </div>
 
       <X01TurnStrip view={view} />
+
+      <X01Keypad onDart={onDart} disabled={isOver} />
 
       <dl
         className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60 sm:grid-cols-4"
@@ -93,8 +142,6 @@ export function X01View({ session, view, dispatch, undo, forfeit }: Props) {
           </dd>
         </div>
       </dl>
-
-      <X01Keypad onDart={onDart} disabled={isOver} />
 
       <div className="mt-4 flex gap-2">
         <button
@@ -129,6 +176,30 @@ export function X01View({ session, view, dispatch, undo, forfeit }: Props) {
         <p role="alert" className="mt-3 text-sm text-red-600">
           {actionError}
         </p>
+      )}
+
+      {legEndData && (
+        <X01LegEndModal
+          completedLegNumber={legEndData.completedLegNumber}
+          legsWon={legEndData.legsWon}
+          participantId={view.activeParticipantId}
+          config={view.config}
+          stats={legEndData.stats}
+          onContinue={() => setLegEndData(null)}
+          onClose={() => setLegEndData(null)}
+        />
+      )}
+
+      {sessionEndData && (
+        <X01SessionEndModal
+          status={view.status}
+          legsWon={view.legsWon}
+          participantId={view.activeParticipantId}
+          config={view.config}
+          stats={sessionEndData.stats}
+          onEndSession={() => navigate('/')}
+          onPlayAgain={onPlayAgain}
+        />
       )}
     </section>
   );

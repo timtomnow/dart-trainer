@@ -1,14 +1,27 @@
-import { Navigate, useParams } from 'react-router-dom';
+import { useCallback } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { FreeformView } from './freeform/FreeformView';
 import { X01View } from './x01/X01View';
 import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
 import type { X01Action, X01ViewModel } from '@/games/x01';
-import { useActiveSession } from '@/hooks';
+import { useActiveSession, useSessions } from '@/hooks';
 
 export function GameScreen() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
   const { session, events, view, isReady, error, dispatch, undo, forfeit } =
     useActiveSession<unknown, unknown>(sessionId ?? null);
+  const { create } = useSessions();
+
+  const handlePlayAgain = useCallback(async () => {
+    if (!session) return;
+    const next = await create({
+      gameModeId: session.gameModeId,
+      gameConfig: session.gameConfig,
+      participants: session.participants
+    });
+    navigate(`/game/${next.id}`);
+  }, [create, navigate, session]);
 
   if (!sessionId) return <Navigate to="/" replace />;
   if (error) {
@@ -31,11 +44,11 @@ export function GameScreen() {
   if (session.gameModeId === 'x01') {
     return (
       <X01View
-        session={session}
         view={view as X01ViewModel}
         dispatch={dispatch as (a: X01Action) => Promise<void>}
         undo={undo}
         forfeit={forfeit}
+        onPlayAgain={handlePlayAgain}
       />
     );
   }
