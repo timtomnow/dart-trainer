@@ -1,1 +1,1 @@
-export {};
+export { KeypadButton } from './KeypadButton';

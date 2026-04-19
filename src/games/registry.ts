@@ -1,8 +1,10 @@
 import type { GameEngine } from './engine';
 import { freeformEngine } from './freeform';
+import { x01Engine } from './x01';
 
 export const GAME_REGISTRY = {
-  freeform: freeformEngine
+  freeform: freeformEngine,
+  x01: x01Engine
 } as const;
 
 export type GameModeId = keyof typeof GAME_REGISTRY;
