@@ -11,7 +11,7 @@ function formatDart(d: { segment: string; value: number }): string {
 
 export function X01TurnStrip({ view }: Props) {
   const { currentTurn, lastClosedTurn } = view;
-  const slots = [0, 1, 2] as const;
+  const slots = [0, 1] as const;
   return (
     <div className="mt-3" aria-label="Current turn darts" data-testid="x01-current-turn">
       <div className="grid grid-cols-4 gap-1.5">
@@ -44,17 +44,20 @@ export function X01TurnStrip({ view }: Props) {
             <div className="text-slate-500 dark:text-slate-400">{'\u00a0'}</div>
           )}
         </div>
-      </div>
-      {lastClosedTurn && (
-        <div className="mt-1 text-right text-xs text-slate-500 dark:text-slate-400">
-          Last:{' '}
-          {lastClosedTurn.bust
-            ? 'bust'
-            : lastClosedTurn.checkout
-              ? `out +${lastClosedTurn.scored}`
-              : `+${lastClosedTurn.scored}`}
+        <div className="rounded border border-slate-200 bg-slate-50 px-1.5 py-1.5 text-center text-xs dark:border-slate-700 dark:bg-slate-800">
+          <div className="text-slate-500 dark:text-slate-400">Last</div>
+          <div className="font-semibold tabular-nums">
+            {lastClosedTurn
+              ? lastClosedTurn.bust
+                ? 'bust'
+                : `+${lastClosedTurn.scored}`
+              : '—'}
+          </div>
+          <div className="text-slate-500 dark:text-slate-400">
+            {lastClosedTurn?.checkout ? 'out' : '\u00a0'}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
