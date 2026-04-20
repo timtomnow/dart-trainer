@@ -96,5 +96,4 @@ export type CricketViewModel = {
   } | null;
   canUndo: boolean;
   winnerParticipantId?: string;
-  pointsPerTurn: Record<string, number>;
 };

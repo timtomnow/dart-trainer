@@ -4,6 +4,7 @@ import { CricketKeypad } from './CricketKeypad';
 import { CricketScoreboard } from './CricketScoreboard';
 import { CricketSessionEndModal } from './CricketSessionEndModal';
 import type { ThrowSegment } from '@/domain/types';
+import { CRICKET_TARGETS } from '@/games/cricket';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
 
 type Props = {
@@ -74,6 +75,8 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
 
   const isOver = view.status !== 'in_progress';
   const won = view.legsWon[view.activeParticipantId] ?? 0;
+  const activePidMarks = view.marks[view.activeParticipantId] ?? {};
+  const marksRemaining = CRICKET_TARGETS.reduce((sum, t) => sum + Math.max(0, 3 - (activePidMarks[t] ?? 0)), 0);
 
   return (
     <section className="mx-auto max-w-xl pb-6">
@@ -88,23 +91,8 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
         marks={view.marks}
         participantIds={view.participantIds}
         activeParticipantId={view.activeParticipantId}
-        pointsPerTurn={view.pointsPerTurn}
+        currentTurnDarts={view.currentTurn.darts}
       />
-
-      {view.currentTurn.darts.length > 0 && (
-        <div className="mt-3 flex gap-2 text-sm" data-testid="cricket-turn-darts">
-          {view.currentTurn.darts.map((d, i) => (
-            <span
-              key={i}
-              className="rounded bg-slate-100 px-2 py-1 font-medium dark:bg-slate-800"
-            >
-              {d.target !== null
-                ? `${d.segment}${d.target === 25 ? 'Bull' : d.target}${d.scored > 0 ? ` +${d.scored}` : ''}`
-                : 'Miss'}
-            </span>
-          ))}
-        </div>
-      )}
 
       <CricketKeypad onDart={onDart} disabled={isOver} />
 
@@ -119,9 +107,9 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Points this turn</dt>
-          <dd className="font-semibold tabular-nums" data-testid="cricket-turn-scored">
-            {view.currentTurn.scored}
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Marks remaining</dt>
+          <dd className="font-semibold tabular-nums" data-testid="cricket-marks-remaining">
+            {marksRemaining}
           </dd>
         </div>
       </dl>
