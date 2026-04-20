@@ -1,3 +1,11 @@
+export type CricketSessionStats = {
+  marksPerRound: number;
+  totalMarks: number;
+  dartsThrown: number;
+  totalScored: number;
+  durationMs: number;
+};
+
 export type X01SessionStats = {
   threeDartAvg: number;
   firstNineAvg: number | null;

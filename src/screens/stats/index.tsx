@@ -1,4 +1,5 @@
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useCricketStats } from '@/hooks/useCricketStats';
 import { useStats } from '@/hooks/useStats';
 import type { AggregateStats, TrendPoint } from '@/hooks/useStats';
 import { fmtAvg, fmtPct } from '@/stats/formatters';
@@ -127,6 +128,7 @@ export function StatsScreen() {
   const { settings } = useAppSettings();
   const profileId = settings?.activeProfileId ?? null;
   const { loading, aggregate, trend } = useStats(profileId);
+  const { loading: cricketLoading, aggregate: cricketAggregate } = useCricketStats(profileId);
 
   return (
     <section className="mx-auto max-w-3xl space-y-6">
@@ -164,6 +166,22 @@ export function StatsScreen() {
             <KpiGrid agg={aggregate} />
           </div>
         </>
+      )}
+
+      {profileId && !cricketLoading && cricketAggregate && (
+        <div>
+          <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
+            Cricket — last {cricketAggregate.sessionCount} session{cricketAggregate.sessionCount !== 1 ? 's' : ''}
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <KpiCard
+              label="Marks per round"
+              value={cricketAggregate.marksPerRound.toFixed(2)}
+            />
+            <KpiCard label="Total marks" value={String(cricketAggregate.totalMarks)} />
+            <KpiCard label="Sessions" value={String(cricketAggregate.sessionCount)} />
+          </div>
+        </div>
       )}
     </section>
   );

@@ -1,10 +1,12 @@
+import { cricketEngine } from './cricket';
 import type { GameEngine } from './engine';
 import { freeformEngine } from './freeform';
 import { x01Engine } from './x01';
 
 export const GAME_REGISTRY = {
   freeform: freeformEngine,
-  x01: x01Engine
+  x01: x01Engine,
+  cricket: cricketEngine
 } as const;
 
 export type GameModeId = keyof typeof GAME_REGISTRY;
