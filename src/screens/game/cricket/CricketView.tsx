@@ -86,9 +86,9 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
 
       <CricketScoreboard
         marks={view.marks}
-        score={view.score}
         participantIds={view.participantIds}
         activeParticipantId={view.activeParticipantId}
+        pointsPerTurn={view.pointsPerTurn}
       />
 
       {view.currentTurn.darts.length > 0 && (

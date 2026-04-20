@@ -60,7 +60,7 @@ Thumbs.db
 *.swp
 
 # Claude Code local-only settings (project-level shared settings can be committed)
-.claude/settings.local.json
+.claude/
 
 # Capacitor (created in M13 if/when we wrap)
 /ios/

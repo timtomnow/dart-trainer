@@ -197,6 +197,13 @@ function view(state: CricketState): CricketViewModel {
       }
     : null;
 
+  const pointsPerTurn: Record<string, number> = {};
+  for (const pid of state.participantIds) {
+    const closedTurns = leg ? leg.turns.filter((t) => t.participantId === pid && t.closed).length : 0;
+    const scored = leg?.score[pid] ?? 0;
+    pointsPerTurn[pid] = closedTurns > 0 ? scored / closedTurns : 0;
+  }
+
   return {
     status: state.status,
     config: state.config,
@@ -209,7 +216,8 @@ function view(state: CricketState): CricketViewModel {
     currentTurn,
     lastClosedTurn,
     canUndo: state.inputEventLog.length > 0,
-    winnerParticipantId: state.winnerParticipantId
+    winnerParticipantId: state.winnerParticipantId,
+    pointsPerTurn
   };
 }
 

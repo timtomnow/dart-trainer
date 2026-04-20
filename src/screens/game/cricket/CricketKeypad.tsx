@@ -9,7 +9,7 @@ type Props = {
   disabled: boolean;
 };
 
-const CRICKET_NUMBERS = [20, 19, 18, 17, 16, 15] as const;
+const CRICKET_NUMBERS = [15, 16, 17, 18, 19, 20] as const;
 
 export function CricketKeypad({ onDart, disabled }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>('S');
