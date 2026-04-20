@@ -13,7 +13,7 @@ import {
   type X01OutRule,
   type X01StartScore
 } from '@/games/x01';
-import { useProfile, useSessions } from '@/hooks';
+import { useKeypadLayout, useProfile, useSessions } from '@/hooks';
 
 export function PlayScreen() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export function PlayScreen() {
   const { create } = useSessions({ status: 'in_progress' });
   const [x01Config, setX01Config] = useState<X01Config>(X01_DEFAULT_CONFIG);
   const [cricketConfig, setCricketConfig] = useState<CricketConfig>(CRICKET_DEFAULT_CONFIG);
+  const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,6 +132,19 @@ export function PlayScreen() {
               <option value="straight">Straight out</option>
               <option value="double">Double out</option>
               <option value="masters">Masters out</option>
+            </select>
+          </label>
+
+          <label className="text-sm sm:col-span-2">
+            <span className="text-slate-500 dark:text-slate-400">Keypad layout</span>
+            <select
+              className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              value={keypadLayout}
+              onChange={(e) => setKeypadLayout(e.target.value as 'sequential' | 'dartboard')}
+              data-testid="x01-keypad-layout"
+            >
+              <option value="sequential">Sequential (1–20)</option>
+              <option value="dartboard">Dartboard (clock layout)</option>
             </select>
           </label>
         </div>

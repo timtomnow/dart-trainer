@@ -1,8 +1,13 @@
 const KEY = 'dt.ui';
 
+import type { KeypadLayout } from '@/domain/types';
+
+export type { KeypadLayout };
+
 export type UiPrefs = {
   theme?: 'light' | 'dark' | 'system';
   haptics?: boolean;
+  keypadLayout?: KeypadLayout;
 };
 
 export function readUiPrefs(): UiPrefs {

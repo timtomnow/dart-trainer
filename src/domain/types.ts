@@ -20,3 +20,5 @@ export type {
   BackupCounts,
   Handedness
 } from './schemas';
+
+export type KeypadLayout = 'sequential' | 'dartboard';
