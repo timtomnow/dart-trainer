@@ -251,6 +251,21 @@ export class DexieStorageAdapter implements StorageAdapter {
     await this.updateSessionStatus(id, 'deleted');
   }
 
+  async discardSession(id: string): Promise<void> {
+    await this.db.transaction(
+      'rw',
+      [this.db.sessions, this.db.events, this.db.derivedStats],
+      async () => {
+        const eventRows = await this.db.events.where('sessionId').equals(id).toArray();
+        if (eventRows.length > 0) {
+          await this.db.events.bulkDelete(eventRows.map((r) => r.id));
+        }
+        await this.db.derivedStats.delete(['session', id]);
+        await this.db.sessions.delete(id);
+      }
+    );
+  }
+
   async appendEvent(event: GameEventType): Promise<GameEventType> {
     const parsed = GameEvent.parse(event);
     return this.db.transaction('rw', this.db.events, async () => {

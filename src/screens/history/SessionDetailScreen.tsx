@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ReplayScrubber } from './ReplayScrubber';
+import { useStorage } from '@/app/providers/StorageProvider';
 import type { GameEvent, Session } from '@/domain/types';
 import { parseX01Config } from '@/games/x01/config';
 import { buildX01State } from '@/games/x01/replay';
@@ -302,12 +304,31 @@ function SessionDetailContent({
 export function SessionDetailScreen() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const adapter = useStorage();
   const { session, events, loading, error } = useSessionDetail(sessionId ?? '');
+  const [discarding, setDiscarding] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
 
   if (!sessionId) {
     navigate('/history', { replace: true });
     return null;
   }
+
+  const onDiscard = async () => {
+    const confirmed = window.confirm(
+      'Permanently delete this session and all its data? This cannot be undone.'
+    );
+    if (!confirmed) return;
+    setDiscarding(true);
+    setDiscardError(null);
+    try {
+      await adapter.discardSession(sessionId);
+      navigate('/history', { replace: true });
+    } catch (err) {
+      setDiscardError(err instanceof Error ? err.message : String(err));
+      setDiscarding(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -321,7 +342,23 @@ export function SessionDetailScreen() {
           Back
         </button>
         <h1 className="text-2xl font-semibold">Session detail</h1>
+        {session && (
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={discarding}
+            className="ml-auto rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+            data-testid="detail-discard"
+          >
+            {discarding ? 'Discarding…' : 'Discard session'}
+          </button>
+        )}
       </div>
+      {discardError && (
+        <p role="alert" className="mb-4 text-sm text-red-600">
+          {discardError}
+        </p>
+      )}
 
       {loading && (
         <p className="text-sm text-slate-500" aria-busy="true">

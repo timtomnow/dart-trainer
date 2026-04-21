@@ -11,6 +11,7 @@ export type UseSessionsResult = {
   refresh: () => Promise<void>;
   create: (input: CreateSessionInput) => Promise<Session>;
   updateStatus: (id: string, status: SessionStatus) => Promise<Session>;
+  discard: (id: string) => Promise<void>;
 };
 
 export function useSessions(filter: ListSessionsFilter = {}): UseSessionsResult {
@@ -22,7 +23,8 @@ export function useSessions(filter: ListSessionsFilter = {}): UseSessionsResult 
     Array.isArray(filter.status) ? filter.status.join(',') : (filter.status ?? ''),
     filter.gameModeId ?? '',
     filter.since ?? '',
-    filter.until ?? ''
+    filter.until ?? '',
+    filter.participantId ?? ''
   ].join('|');
 
   const refresh = useCallback(async () => {
@@ -46,5 +48,13 @@ export function useSessions(filter: ListSessionsFilter = {}): UseSessionsResult 
     [adapter]
   );
 
-  return { sessions, loading, refresh, create, updateStatus };
+  const discard = useCallback(
+    async (id: string) => {
+      await adapter.discardSession(id);
+      await refresh();
+    },
+    [adapter, refresh]
+  );
+
+  return { sessions, loading, refresh, create, updateStatus, discard };
 }

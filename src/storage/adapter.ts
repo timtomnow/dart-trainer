@@ -45,6 +45,7 @@ export interface StorageAdapter {
   listSessions(filter?: ListSessionsFilter): Promise<Session[]>;
   updateSessionStatus(id: string, status: SessionStatus): Promise<Session>;
   deleteSession(id: string): Promise<void>;
+  discardSession(id: string): Promise<void>;
 
   appendEvent(event: GameEvent): Promise<GameEvent>;
   listEvents(sessionId: string): Promise<GameEvent[]>;
