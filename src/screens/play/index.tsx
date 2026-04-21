@@ -7,6 +7,24 @@ import {
   type CricketConfig
 } from '@/games/cricket';
 import {
+  RTW_DEFAULT_CONFIG,
+  RTW_GAME_ID,
+  type RtwConfig,
+  type RtwGameType,
+  type RtwMode,
+  type RtwOrder,
+  getTargetSequence,
+  seededShuffle
+} from '@/games/rtw';
+import {
+  RTW_SCORING_DEFAULT_CONFIG,
+  RTW_SCORING_GAME_ID,
+  type RtwScoringConfig,
+  type RtwScoringGameType,
+  type RtwScoringMode,
+  type RtwScoringOrder
+} from '@/games/rtw-scoring';
+import {
   X01_DEFAULT_CONFIG,
   X01_GAME_ID,
   type X01Config,
@@ -60,12 +78,17 @@ function ResumeCard({
   );
 }
 
+const SELECT_CLS =
+  'mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900';
+
 export function PlayScreen() {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { sessions, create, discard } = useSessions({ status: 'in_progress' });
   const [x01Config, setX01Config] = useState<X01Config>(X01_DEFAULT_CONFIG);
   const [cricketConfig, setCricketConfig] = useState<CricketConfig>(CRICKET_DEFAULT_CONFIG);
+  const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
+  const [rtwScoringConfig, setRtwScoringConfig] = useState<RtwScoringConfig>(RTW_SCORING_DEFAULT_CONFIG);
   const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +107,20 @@ export function PlayScreen() {
     ) ?? null;
   }, [sessions, profile]);
 
+  const resumableRtw = useMemo(() => {
+    if (!profile) return null;
+    return sessions.find(
+      (s) => s.gameModeId === RTW_GAME_ID && s.participants.includes(profile.id)
+    ) ?? null;
+  }, [sessions, profile]);
+
+  const resumableRtwScoring = useMemo(() => {
+    if (!profile) return null;
+    return sessions.find(
+      (s) => s.gameModeId === RTW_SCORING_GAME_ID && s.participants.includes(profile.id)
+    ) ?? null;
+  }, [sessions, profile]);
+
   const discardExisting = async (existingSession: Session) => {
     const confirmed = window.confirm(
       'Permanently discard this in-progress session? This cannot be undone.'
@@ -97,7 +134,10 @@ export function PlayScreen() {
     }
   };
 
-  const startSession = async (gameModeId: string, gameConfig: X01Config | CricketConfig) => {
+  const startSession = async (
+    gameModeId: string,
+    gameConfig: X01Config | CricketConfig | RtwConfig | RtwScoringConfig
+  ) => {
     if (!profile) return;
     setStarting(true);
     setError(null);
@@ -112,6 +152,24 @@ export function PlayScreen() {
       setError(err instanceof Error ? err.message : String(err));
       setStarting(false);
     }
+  };
+
+  const startRtw = async () => {
+    let cfg = rtwConfig;
+    if (cfg.order === 'Random') {
+      const base = getTargetSequence({ ...cfg, order: '1-20' });
+      cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
+    }
+    await startSession(RTW_GAME_ID, cfg);
+  };
+
+  const startRtwScoring = async () => {
+    let cfg = rtwScoringConfig;
+    if (cfg.order === 'Random') {
+      const base = getTargetSequence({ ...cfg, order: '1-20' } as RtwConfig);
+      cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
+    }
+    await startSession(RTW_SCORING_GAME_ID, cfg);
   };
 
   return (
@@ -279,6 +337,216 @@ export function PlayScreen() {
               data-testid="cricket-start"
             >
               {starting ? 'Starting…' : 'Start Cricket'}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ── Round the World ───────────────────────────────────────────────── */}
+      <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <h2 className="text-lg font-semibold">Round the World</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Work through targets in sequence. Hit each to advance.
+        </p>
+
+        {resumableRtw ? (
+          <div className="mt-4">
+            <ResumeCard
+              session={resumableRtw}
+              label="Round the World"
+              onResume={() => navigate(`/game/${resumableRtw.id}`)}
+              onStartNew={() => void discardExisting(resumableRtw)}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Game type</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwConfig.gameType}
+                  onChange={(e) =>
+                    setRtwConfig((c) => ({ ...c, gameType: e.target.value as RtwGameType }))
+                  }
+                  data-testid="rtw-game-type"
+                >
+                  <option value="Single">Single</option>
+                  <option value="Single Inner">Single Inner</option>
+                  <option value="Single Outer">Single Outer</option>
+                  <option value="Double">Double</option>
+                  <option value="Triple">Triple</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Mode</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwConfig.mode}
+                  onChange={(e) =>
+                    setRtwConfig((c) => ({ ...c, mode: e.target.value as RtwMode }))
+                  }
+                  data-testid="rtw-mode"
+                >
+                  <option value="Hit once">Hit once</option>
+                  <option value="3 darts per target">3 darts per target</option>
+                  <option value="1-dart per target">1-dart per target</option>
+                  <option value="3-darts until hit 1">3-darts until hit 1</option>
+                  <option value="3-darts until hit 2">3-darts until hit 2</option>
+                  <option value="3-darts until hit 3">3-darts until hit 3</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Order</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwConfig.order}
+                  onChange={(e) =>
+                    setRtwConfig((c) => ({ ...c, order: e.target.value as RtwOrder }))
+                  }
+                  data-testid="rtw-order"
+                >
+                  <option value="1-20">1–20</option>
+                  <option value="20-1">20–1</option>
+                  <option value="Clockwise">Clockwise</option>
+                  <option value="Counter Clockwise">Counter Clockwise</option>
+                  <option value="Random">Random</option>
+                </select>
+              </label>
+
+              {rtwConfig.gameType !== 'Triple' && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={rtwConfig.excludeBull}
+                    onChange={(e) =>
+                      setRtwConfig((c) => ({ ...c, excludeBull: e.target.checked }))
+                    }
+                    data-testid="rtw-exclude-bull"
+                  />
+                  <span className="text-slate-700 dark:text-slate-300">Exclude bull</span>
+                </label>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void startRtw()}
+              disabled={!profile || starting}
+              className="mt-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="rtw-start"
+            >
+              {starting ? 'Starting…' : 'Start RTW'}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ── RTW Scoring ───────────────────────────────────────────────────── */}
+      <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <h2 className="text-lg font-semibold">RTW Scoring</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Round the World with weighted scoring: single=1×, double=2×, triple=3×.
+        </p>
+
+        {resumableRtwScoring ? (
+          <div className="mt-4">
+            <ResumeCard
+              session={resumableRtwScoring}
+              label="RTW Scoring"
+              onResume={() => navigate(`/game/${resumableRtwScoring.id}`)}
+              onStartNew={() => void discardExisting(resumableRtwScoring)}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Game type</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwScoringConfig.gameType}
+                  onChange={(e) =>
+                    setRtwScoringConfig((c) => ({
+                      ...c,
+                      gameType: e.target.value as RtwScoringGameType
+                    }))
+                  }
+                  data-testid="rtws-game-type"
+                >
+                  <option value="Single">Single</option>
+                  <option value="Single Inner">Single Inner</option>
+                  <option value="Single Outer">Single Outer</option>
+                  <option value="Double">Double</option>
+                  <option value="Triple">Triple</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Mode</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwScoringConfig.mode}
+                  onChange={(e) =>
+                    setRtwScoringConfig((c) => ({ ...c, mode: e.target.value as RtwScoringMode }))
+                  }
+                  data-testid="rtws-mode"
+                >
+                  <option value="Hit once">Hit once</option>
+                  <option value="3 darts per target">3 darts per target</option>
+                  <option value="1-dart per target">1-dart per target</option>
+                  <option value="3-darts until hit 1">3-darts until hit 1</option>
+                  <option value="3-darts until hit 2">3-darts until hit 2</option>
+                  <option value="3-darts until hit 3">3-darts until hit 3</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Order</span>
+                <select
+                  className={SELECT_CLS}
+                  value={rtwScoringConfig.order}
+                  onChange={(e) =>
+                    setRtwScoringConfig((c) => ({
+                      ...c,
+                      order: e.target.value as RtwScoringOrder
+                    }))
+                  }
+                  data-testid="rtws-order"
+                >
+                  <option value="1-20">1–20</option>
+                  <option value="20-1">20–1</option>
+                  <option value="Clockwise">Clockwise</option>
+                  <option value="Counter Clockwise">Counter Clockwise</option>
+                  <option value="Random">Random</option>
+                </select>
+              </label>
+
+              {rtwScoringConfig.gameType !== 'Triple' && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={rtwScoringConfig.excludeBull}
+                    onChange={(e) =>
+                      setRtwScoringConfig((c) => ({ ...c, excludeBull: e.target.checked }))
+                    }
+                    data-testid="rtws-exclude-bull"
+                  />
+                  <span className="text-slate-700 dark:text-slate-300">Exclude bull</span>
+                </label>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void startRtwScoring()}
+              disabled={!profile || starting}
+              className="mt-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="rtws-start"
+            >
+              {starting ? 'Starting…' : 'Start RTW Scoring'}
             </button>
           </>
         )}

@@ -1,3 +1,15 @@
+export type RtwSessionStats = {
+  targetsHit: number;
+  targetsTotal: number;
+  dartsThrown: number;
+  hitRatePct: number | null;
+  durationMs: number;
+};
+
+export type RtwScoringSessionStats = RtwSessionStats & {
+  totalScore: number;
+};
+
 export type CricketSessionStats = {
   marksPerRound: number;
   totalMarks: number;

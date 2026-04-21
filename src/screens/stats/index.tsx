@@ -1,5 +1,6 @@
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useCricketStats } from '@/hooks/useCricketStats';
+import { useRtwStats } from '@/hooks/useRtwStats';
 import { useStats } from '@/hooks/useStats';
 import type { AggregateStats, TrendPoint } from '@/hooks/useStats';
 import { fmtAvg, fmtPct } from '@/stats/formatters';
@@ -129,6 +130,7 @@ export function StatsScreen() {
   const profileId = settings?.activeProfileId ?? null;
   const { loading, aggregate, trend } = useStats(profileId);
   const { loading: cricketLoading, aggregate: cricketAggregate } = useCricketStats(profileId);
+  const { loading: rtwLoading, rtwAggregate, rtwScoringAggregate } = useRtwStats(profileId);
 
   return (
     <section className="mx-auto max-w-3xl space-y-6">
@@ -180,6 +182,35 @@ export function StatsScreen() {
             />
             <KpiCard label="Total marks" value={String(cricketAggregate.totalMarks)} />
             <KpiCard label="Sessions" value={String(cricketAggregate.sessionCount)} />
+          </div>
+        </div>
+      )}
+
+      {profileId && !rtwLoading && rtwAggregate && (
+        <div>
+          <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
+            Round the World — last {rtwAggregate.sessionCount} session{rtwAggregate.sessionCount !== 1 ? 's' : ''}
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <KpiCard label="Avg targets hit" value={rtwAggregate.avgTargetsHit.toFixed(1)} />
+            <KpiCard
+              label="Hit rate"
+              value={rtwAggregate.avgHitRatePct !== null ? fmtPct(rtwAggregate.avgHitRatePct) : '—'}
+            />
+            <KpiCard label="Sessions" value={String(rtwAggregate.sessionCount)} />
+          </div>
+        </div>
+      )}
+
+      {profileId && !rtwLoading && rtwScoringAggregate && (
+        <div>
+          <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
+            RTW Scoring — last {rtwScoringAggregate.sessionCount} session{rtwScoringAggregate.sessionCount !== 1 ? 's' : ''}
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <KpiCard label="Avg score" value={rtwScoringAggregate.avgScore.toFixed(0)} />
+            <KpiCard label="Best score" value={String(rtwScoringAggregate.bestScore)} />
+            <KpiCard label="Sessions" value={String(rtwScoringAggregate.sessionCount)} />
           </div>
         </div>
       )}

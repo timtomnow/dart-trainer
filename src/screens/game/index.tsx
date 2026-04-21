@@ -2,9 +2,13 @@ import { useCallback } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CricketView } from './cricket/CricketView';
 import { FreeformView } from './freeform/FreeformView';
+import { RtwView } from './rtw/RtwView';
+import { RtwScoringView } from './rtw-scoring/RtwScoringView';
 import { X01View } from './x01/X01View';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
 import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
+import type { RtwAction, RtwViewModel } from '@/games/rtw';
+import type { RtwScoringAction, RtwScoringViewModel } from '@/games/rtw-scoring';
 import type { X01Action, X01ViewModel } from '@/games/x01';
 import { useActiveSession, useSessions } from '@/hooks';
 
@@ -60,6 +64,30 @@ export function GameScreen() {
       <CricketView
         view={view as CricketViewModel}
         dispatch={dispatch as (a: CricketAction) => Promise<void>}
+        undo={undo}
+        forfeit={forfeit}
+        onPlayAgain={handlePlayAgain}
+      />
+    );
+  }
+
+  if (session.gameModeId === 'rtw') {
+    return (
+      <RtwView
+        view={view as RtwViewModel}
+        dispatch={dispatch as (a: RtwAction) => Promise<void>}
+        undo={undo}
+        forfeit={forfeit}
+        onPlayAgain={handlePlayAgain}
+      />
+    );
+  }
+
+  if (session.gameModeId === 'rtw-scoring') {
+    return (
+      <RtwScoringView
+        view={view as RtwScoringViewModel}
+        dispatch={dispatch as (a: RtwScoringAction) => Promise<void>}
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
