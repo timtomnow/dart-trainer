@@ -7,7 +7,6 @@ import { isInputEventType } from '@/domain/events';
 import { CURRENT_SCHEMA_VERSION } from '@/domain/schemas/common';
 import type { GameEvent, GameEventType } from '@/domain/types';
 import type { EngineReduceResult, EngineSeeds, GameEngine } from '@/games/engine';
-import { isValidDart } from '@/games/engine/common';
 
 function error(state: RtwState, code: string, message: string): EngineReduceResult<RtwState> {
   return { state, emit: [], pop: [], error: { code, message } };
@@ -63,17 +62,17 @@ function reduce(
     if (action.participantId !== state.activeParticipantId) {
       return error(state, 'wrong_turn', `Not this participant's turn: ${action.participantId}`);
     }
-    if (!isValidDart({ segment: action.segment, value: action.value })) {
-      return error(state, 'invalid_dart', `Invalid dart: ${action.segment}:${action.value}`);
+
+    const targetIndex = state.currentTargetIndex;
+    const targetValue = state.targetSequence[targetIndex] ?? 0;
+
+    let payload: RtwThrowPayload;
+    if ('hit' in action) {
+      payload = { participantId: action.participantId, targetIndex, targetValue, hit: action.hit };
+    } else {
+      payload = { participantId: action.participantId, targetIndex, targetValue, hitsInTurn: action.hitsInTurn };
     }
 
-    const payload: RtwThrowPayload = {
-      participantId: action.participantId,
-      segment: action.segment,
-      value: action.value,
-      targetIndex: state.currentTargetIndex,
-      dartInTurn: state.dartsInCurrentTurn
-    };
     const event = makeEvent(state.sessionId, nextSeq, 'throw', payload, seeds);
     const nextLog = [...state.inputEventLog, event];
     return {
@@ -118,8 +117,8 @@ function reduce(
 }
 
 function view(state: RtwState): RtwViewModel {
-  const totalDarts = state.turns.reduce((s, t) => s + t.darts.length, 0);
-  const targetsHit = state.turns.filter((t: RtwTurn) => t.darts.some((d) => d.isHit)).length;
+  const totalDarts = state.turns.reduce((s, t) => s + t.dartsInTurn, 0);
+  const targetsHit = state.turns.filter((t: RtwTurn) => t.hitsInTurn > 0).length;
   const dpt = dartsPerTurn(state.config.mode);
   const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
 

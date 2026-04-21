@@ -1,89 +1,60 @@
-import { useState } from 'react';
-import type { ThrowSegment } from '@/domain/types';
+import type { RtwMode } from '@/games/rtw';
 import { KeypadButton } from '@/ui/primitives';
 
-type Multiplier = 'S' | 'D' | 'T';
-
 type Props = {
-  onDart: (segment: ThrowSegment, value: number) => void;
+  mode: RtwMode;
+  onGroupA: (hit: boolean) => void;
+  onGroupB: (hitsInTurn: 0 | 1 | 2 | 3) => void;
   disabled: boolean;
-  currentTarget: number | null;
-  showBull: boolean;
 };
 
-const NUMBERS = Array.from({ length: 20 }, (_, i) => i + 1);
+const GROUP_B_LABELS: Record<0 | 1 | 2 | 3, string> = {
+  0: 'Miss',
+  1: '1 Hit',
+  2: '2 Hits',
+  3: '3 Hits'
+};
 
-export function RtwKeypad({ onDart, disabled, currentTarget, showBull }: Props) {
-  const [multiplier, setMultiplier] = useState<Multiplier>('S');
-
-  const pickNumber = (face: number) => {
-    const value = face * (multiplier === 'S' ? 1 : multiplier === 'D' ? 2 : 3);
-    onDart(multiplier, value);
-    setMultiplier('S');
-  };
-
-  const pickBull = () => {
-    if (multiplier === 'D') onDart('DB', 50);
-    else onDart('SB', 25);
-    setMultiplier('S');
-  };
-
-  const pickMiss = () => {
-    onDart('MISS', 0);
-    setMultiplier('S');
-  };
-
-  return (
-    <div className="mt-4" aria-label="RTW keypad">
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Multiplier">
-        {(['S', 'D', 'T'] as const).map((m) => (
-          <KeypadButton
-            key={m}
-            variant={multiplier === m ? 'multiplier-active' : 'multiplier'}
-            role="radio"
-            aria-checked={multiplier === m}
-            onClick={() => setMultiplier(m)}
-            disabled={disabled}
-            data-testid={`rtw-mult-${m}`}
-          >
-            {m === 'S' ? 'Single' : m === 'D' ? 'Double' : 'Triple'}
-          </KeypadButton>
-        ))}
-      </div>
-      <div className="mt-2 grid grid-cols-5 gap-2">
-        {NUMBERS.map((n) => (
-          <KeypadButton
-            key={n}
-            onClick={() => pickNumber(n)}
-            disabled={disabled}
-            variant={n === currentTarget ? 'multiplier-active' : undefined}
-            data-testid={`rtw-num-${n}`}
-          >
-            {n}
-          </KeypadButton>
-        ))}
-      </div>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        {showBull && (
-          <KeypadButton
-            variant={currentTarget === 25 ? 'multiplier-active' : 'special'}
-            onClick={pickBull}
-            disabled={disabled}
-            data-testid="rtw-bull"
-          >
-            {multiplier === 'D' ? 'Bull (50)' : 'Bull (25)'}
-          </KeypadButton>
-        )}
+export function RtwKeypad({ mode, onGroupA, onGroupB, disabled }: Props) {
+  if (mode === 'Hit once' || mode === '1-dart per target') {
+    return (
+      <div className="mt-4 grid grid-cols-2 gap-4" aria-label="RTW keypad">
+        <KeypadButton
+          variant="multiplier-active"
+          onClick={() => onGroupA(true)}
+          disabled={disabled}
+          className="py-8 text-xl"
+          data-testid="rtw-hit"
+        >
+          Hit
+        </KeypadButton>
         <KeypadButton
           variant="danger"
-          onClick={pickMiss}
+          onClick={() => onGroupA(false)}
           disabled={disabled}
+          className="py-8 text-xl"
           data-testid="rtw-miss"
-          className={!showBull ? 'col-span-2' : ''}
         >
           Miss
         </KeypadButton>
       </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-4" aria-label="RTW keypad">
+      {([0, 1, 2, 3] as const).map((n) => (
+        <KeypadButton
+          key={n}
+          variant={n === 0 ? 'danger' : 'number'}
+          onClick={() => onGroupB(n)}
+          disabled={disabled}
+          className="py-6"
+          data-testid={`rtw-hits-${n}`}
+        >
+          {GROUP_B_LABELS[n]}
+        </KeypadButton>
+      ))}
     </div>
   );
 }

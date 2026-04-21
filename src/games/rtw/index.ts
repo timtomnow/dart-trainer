@@ -11,7 +11,6 @@ export {
 export { getTargetSequence, seededShuffle } from './rules';
 export type {
   RtwAction,
-  RtwDart,
   RtwState,
   RtwStatus,
   RtwThrowPayload,

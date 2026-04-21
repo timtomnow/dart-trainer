@@ -18,8 +18,8 @@ export function computeRtwStats(
   let targetsHit = 0;
 
   for (const turn of state.turns) {
-    dartsThrown += turn.darts.length;
-    if (turn.darts.some((d) => d.isHit)) targetsHit++;
+    dartsThrown += turn.dartsInTurn;
+    if (turn.hitsInTurn > 0) targetsHit++;
   }
 
   const targetsTotal = state.targetSequence.length;

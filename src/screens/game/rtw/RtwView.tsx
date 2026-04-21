@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwKeypad } from './RtwKeypad';
-import type { ThrowSegment } from '@/domain/types';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
 
 type Props = {
@@ -53,13 +52,24 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
     }
   };
 
-  const onDart = (segment: ThrowSegment, value: number) =>
+  const onGroupA = (hit: boolean) =>
     run(() =>
-      dispatch({ type: 'throw', participantId: view.activeParticipantId, segment, value })
+      dispatch({ type: 'throw', participantId: view.activeParticipantId, hit })
+    );
+
+  const onGroupB = (hitsInTurn: 0 | 1 | 2 | 3) =>
+    run(() =>
+      dispatch({ type: 'throw', participantId: view.activeParticipantId, hitsInTurn })
     );
 
   const isOver = view.status !== 'in_progress';
-  const hasBull = view.targetSequence.includes(25);
+  const isGroupA = view.config.mode === 'Hit once' || view.config.mode === '1-dart per target';
+
+  const nextTargets = view.targetSequence.slice(
+    view.currentTargetIndex + 1,
+    view.currentTargetIndex + 4
+  ).map((v) => (v === 25 ? 'Bull' : String(v)));
+
   const hitRate =
     view.targetsHit > 0 && view.currentTargetIndex > 0
       ? Math.round((view.targetsHit / view.currentTargetIndex) * 100)
@@ -96,9 +106,16 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
             <p className="mt-1 text-6xl font-bold tabular-nums text-blue-600 dark:text-blue-400" data-testid="rtw-target">
               {view.currentTarget === 25 ? 'Bull' : view.currentTarget}
             </p>
-            <div className="mt-3 flex items-center justify-center gap-3">
-              <DartDots filled={view.dartsInCurrentTurn} total={view.dartsPerTurn} />
-            </div>
+            {isGroupA && (
+              <div className="mt-3 flex items-center justify-center gap-3">
+                <DartDots filled={view.dartsInCurrentTurn} total={view.dartsPerTurn} />
+              </div>
+            )}
+            {nextTargets.length > 0 && (
+              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                Next: {nextTargets.join(' → ')}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -108,7 +125,7 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
         <div>
           <dt className="text-xs text-slate-500 dark:text-slate-400">Targets hit</dt>
           <dd className="font-semibold tabular-nums" data-testid="rtw-targets-hit">
-            {view.targetsHit}
+            {view.targetsHit}/{view.targetsTotal}
           </dd>
         </div>
         <div>
@@ -126,10 +143,10 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
       </dl>
 
       <RtwKeypad
-        onDart={onDart}
+        mode={view.config.mode}
+        onGroupA={onGroupA}
+        onGroupB={onGroupB}
         disabled={isOver}
-        currentTarget={view.currentTarget}
-        showBull={hasBull}
       />
 
       {!sessionDone && (

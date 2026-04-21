@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { RtwConfig } from '@/games/rtw';
-import { RTW_DEFAULT_CONFIG, rtwEngine } from '@/games/rtw';
+import type { EngineSeeds } from '@/games/engine';
+import { type RtwConfig, RTW_DEFAULT_CONFIG, rtwEngine } from '@/games/rtw';
 import type { RtwScoringConfig } from '@/games/rtw-scoring';
 import { RTW_SCORING_DEFAULT_CONFIG, rtwScoringEngine } from '@/games/rtw-scoring';
-import type { EngineSeeds } from '@/games/engine';
 import { computeRtwStats, computeRtwScoringStats } from '@/stats/rtwStats';
 
 const SESSION_ID = '01JBRTWSTAT0SESSION00000000';
@@ -33,7 +32,10 @@ function makeSeeds(ids: string[]): EngineSeeds {
   };
 }
 
-function buildRtwEvents(config: RtwConfig, actions: Array<{ segment: 'S' | 'D' | 'T' | 'MISS' | 'SB' | 'DB'; value: number }>) {
+type RtwGroupAAction = { hit: boolean };
+type RtwGroupBAction = { hitsInTurn: 0 | 1 | 2 | 3 };
+
+function buildRtwGroupAEvents(config: RtwConfig, actions: RtwGroupAAction[]) {
   let state = rtwEngine.init(config, [P1], SESSION_ID, makeSeeds([]));
   const allEvents: Parameters<typeof computeRtwStats>[0] = [];
   const seeds = makeSeeds(seededIds(actions.length));
@@ -41,7 +43,7 @@ function buildRtwEvents(config: RtwConfig, actions: Array<{ segment: 'S' | 'D' |
   for (const a of actions) {
     const r = rtwEngine.reduce(
       state,
-      { type: 'throw', participantId: P1, segment: a.segment, value: a.value },
+      { type: 'throw', participantId: P1, hit: a.hit },
       seeds
     );
     if (!r.error) {
@@ -52,7 +54,26 @@ function buildRtwEvents(config: RtwConfig, actions: Array<{ segment: 'S' | 'D' |
   return { events: allEvents, state };
 }
 
-// ── RTW stats ────────────────────���─────────────────────────────────���──────────
+function buildRtwGroupBEvents(config: RtwConfig, actions: RtwGroupBAction[]) {
+  let state = rtwEngine.init(config, [P1], SESSION_ID, makeSeeds([]));
+  const allEvents: Parameters<typeof computeRtwStats>[0] = [];
+  const seeds = makeSeeds(seededIds(actions.length));
+
+  for (const a of actions) {
+    const r = rtwEngine.reduce(
+      state,
+      { type: 'throw', participantId: P1, hitsInTurn: a.hitsInTurn },
+      seeds
+    );
+    if (!r.error) {
+      allEvents.push(...r.emit);
+      state = r.state;
+    }
+  }
+  return { events: allEvents, state };
+}
+
+// ── RTW stats ─────────────────────────────────────────────────────────────────
 
 describe('computeRtwStats', () => {
   it('returns zero stats for empty events', () => {
@@ -67,38 +88,31 @@ describe('computeRtwStats', () => {
     expect(stats.hitRatePct).toBeNull();
   });
 
-  it('counts targets hit correctly — hit once mode', () => {
-    // Target 1 (hit), Target 2 (miss), Target 3 (hit) across 3-dart turns
+  it('counts targets hit correctly — 3 darts per target mode', () => {
+    // Turn 1 at target 1: 1 hit → advance. Turn 2 at target 2: 0 hits → advance. Turn 3 at target 3: 1 hit → advance.
     const config: RtwConfig = { ...RTW_DEFAULT_CONFIG, mode: '3 darts per target', excludeBull: true };
-    // Turn 1 at target 1: S1(hit), miss, miss → advance
-    // Turn 2 at target 2: miss, miss, miss → advance (always advances)
-    // Turn 3 at target 3: S3(hit), miss, miss → advance
-    const actions = [
-      { segment: 'S' as const, value: 1 }, { segment: 'MISS' as const, value: 0 }, { segment: 'MISS' as const, value: 0 },
-      { segment: 'MISS' as const, value: 0 }, { segment: 'MISS' as const, value: 0 }, { segment: 'MISS' as const, value: 0 },
-      { segment: 'S' as const, value: 3 }, { segment: 'MISS' as const, value: 0 }, { segment: 'MISS' as const, value: 0 }
+    const actions: RtwGroupBAction[] = [
+      { hitsInTurn: 1 }, // hit on target 1
+      { hitsInTurn: 0 }, // miss on target 2
+      { hitsInTurn: 1 }  // hit on target 3
     ];
-    const { events } = buildRtwEvents(config, actions);
+    const { events } = buildRtwGroupBEvents(config, actions);
     const stats = computeRtwStats(events, config, {
       id: SESSION_ID,
       participants: [P1],
       startedAt: STARTED_AT
     });
 
-    expect(stats.dartsThrown).toBe(9);
+    expect(stats.dartsThrown).toBe(9); // 3 turns × 3 darts
     expect(stats.targetsHit).toBe(2);
     expect(stats.targetsTotal).toBe(20); // excludeBull, 20 targets
     expect(stats.hitRatePct).toBeCloseTo((2 / 3) * 100, 0);
   });
 
-  it('marks session as completed and reports correct darts thrown', () => {
-    // Use 1-dart per target so each dart = one turn, giving a clean 1:1 targetsHit count
+  it('marks session as completed and reports correct darts thrown (1-dart per target)', () => {
     const config: RtwConfig = { ...RTW_DEFAULT_CONFIG, mode: '1-dart per target', excludeBull: true };
-    const actions = Array.from({ length: 20 }, (_, i) => ({
-      segment: 'S' as const,
-      value: i + 1
-    }));
-    const { events, state } = buildRtwEvents(config, actions);
+    const actions: RtwGroupAAction[] = Array.from({ length: 20 }, () => ({ hit: true }));
+    const { events, state } = buildRtwGroupAEvents(config, actions);
     expect(state.status).toBe('completed');
 
     const stats = computeRtwStats(events, config, {
@@ -108,8 +122,21 @@ describe('computeRtwStats', () => {
     });
 
     expect(stats.dartsThrown).toBe(20);
-    expect(stats.targetsHit).toBe(20); // each dart = one turn, all 20 hit
+    expect(stats.targetsHit).toBe(20);
     expect(stats.targetsTotal).toBe(20);
+  });
+
+  it('dartsThrown is turns × 3 for Group B modes', () => {
+    const config: RtwConfig = { ...RTW_DEFAULT_CONFIG, mode: '3-darts until hit 1', excludeBull: true };
+    // 2 turns: first misses (stays), second hits (advances)
+    const actions: RtwGroupBAction[] = [{ hitsInTurn: 0 }, { hitsInTurn: 1 }];
+    const { events } = buildRtwGroupBEvents(config, actions);
+    const stats = computeRtwStats(events, config, {
+      id: SESSION_ID,
+      participants: [P1],
+      startedAt: STARTED_AT
+    });
+    expect(stats.dartsThrown).toBe(6); // 2 turns × 3 darts
   });
 });
 
@@ -153,23 +180,20 @@ describe('computeRtwScoringStats', () => {
   it('scores doubles at 2× target value', () => {
     const config: RtwScoringConfig = {
       ...RTW_SCORING_DEFAULT_CONFIG,
-      gameType: 'Single', // Single type for advancement; scoring is any ring
+      gameType: 'Single',
       mode: '1-dart per target',
       excludeBull: true
     };
-    // D1 (double 1 = value 2): scores 2 × 1 = 2 for target 1
     let state = rtwScoringEngine.init(config, [P1], SESSION_ID, makeSeeds([]));
     const events: Parameters<typeof computeRtwScoringStats>[0] = [];
     const seeds = makeSeeds(seededIds(5));
 
-    // For Single gameType, D1 won't hit for advancement but will score (dartScore gives 2)
-    // To test scoring without advancement concern, use Double gameType
     const config2: RtwScoringConfig = { ...config, gameType: 'Double' };
     state = rtwScoringEngine.init(config2, [P1], SESSION_ID, makeSeeds([]));
 
     const r = rtwScoringEngine.reduce(
       state,
-      { type: 'throw', participantId: P1, segment: 'D', value: 2 }, // D1 for target 1
+      { type: 'throw', participantId: P1, segment: 'D', value: 2 },
       seeds
     );
     if (!r.error) {
@@ -183,7 +207,7 @@ describe('computeRtwScoringStats', () => {
       startedAt: STARTED_AT
     });
 
-    expect(stats.totalScore).toBe(2); // 2 × 1 = 2
+    expect(stats.totalScore).toBe(2);
     expect(stats.targetsHit).toBe(1);
   });
 
@@ -198,7 +222,6 @@ describe('computeRtwScoringStats', () => {
     const events: Parameters<typeof computeRtwScoringStats>[0] = [];
     const seeds = makeSeeds(seededIds(5));
 
-    // T1 = segment T, value 3, target 1 → scores 3 × 1 = 3
     const r = rtwScoringEngine.reduce(
       state,
       { type: 'throw', participantId: P1, segment: 'T', value: 3 },

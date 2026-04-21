@@ -4,17 +4,10 @@ import {
   alwaysAdvances,
   dartsPerTurn,
   getTargetSequence,
-  hitsRequiredToAdvance,
-  isHit
+  hitsRequiredToAdvance
 } from './rules';
-import type { RtwDart, RtwState, RtwStatus, RtwTurn } from './types';
-import type { GameEvent, ThrowSegment } from '@/domain/types';
-
-type ThrowPayload = {
-  participantId: string;
-  segment: ThrowSegment;
-  value: number;
-};
+import type { RtwState, RtwStatus, RtwThrowPayload, RtwTurn } from './types';
+import type { GameEvent } from '@/domain/types';
 
 export function buildRtwState(
   events: GameEvent[],
@@ -50,60 +43,85 @@ export function buildRtwState(
     const target = targetSequence[targetIndex];
     if (target === undefined) break;
 
-    const p = ev.payload as ThrowPayload;
-    const hit = isHit(p.segment, p.value, target, config.gameType);
+    const p = ev.payload as RtwThrowPayload;
 
-    if (!currentTurn || currentTurn.closed) {
-      currentTurn = {
-        participantId: p.participantId,
-        darts: [],
-        closed: false,
-        advanced: false,
-        targetIndexAtStart: targetIndex
-      };
-      turns.push(currentTurn);
-      dartsInTurn = 0;
-      hitsInTurn = 0;
-    }
-
-    const dart: RtwDart = {
-      eventId: ev.id,
-      segment: p.segment,
-      value: p.value,
-      targetIndex,
-      isHit: hit
-    };
-    currentTurn.darts.push(dart);
-
-    if (hit) hitsInTurn++;
-
-    // 'Hit once': advance target immediately on hit, remaining darts go to next target
-    if (advOnHit && hit) {
-      currentTurn.advanced = true;
-      targetIndex++;
-      if (targetIndex >= targetSequence.length) {
-        currentTurn.closed = true;
-        winnerParticipantId = p.participantId;
-        status = 'completed';
-        break;
+    if ('hit' in p) {
+      // Group A: one dart per event ('Hit once', '1-dart per target')
+      if (!currentTurn || currentTurn.closed) {
+        currentTurn = {
+          participantId: p.participantId,
+          targetIndexAtStart: targetIndex,
+          hitsInTurn: 0,
+          dartsInTurn: 0,
+          closed: false,
+          advanced: false
+        };
+        turns.push(currentTurn);
+        dartsInTurn = 0;
+        hitsInTurn = 0;
       }
-    }
 
-    dartsInTurn++;
+      if (p.hit) {
+        hitsInTurn++;
+        currentTurn.hitsInTurn++;
+      }
 
-    if (dartsInTurn >= dpt) {
-      if (!advOnHit) {
-        const advances = alwaysAdv || hitsInTurn >= hitsRequired;
-        if (advances) {
-          currentTurn.advanced = true;
-          targetIndex++;
-          if (targetIndex >= targetSequence.length) {
-            winnerParticipantId = p.participantId;
-            status = 'completed';
-          }
+      // 'Hit once': advance target immediately on hit; remaining darts go to next target
+      if (advOnHit && p.hit) {
+        currentTurn.advanced = true;
+        targetIndex++;
+        if (targetIndex >= targetSequence.length) {
+          currentTurn.dartsInTurn = dartsInTurn + 1;
+          currentTurn.closed = true;
+          winnerParticipantId = p.participantId;
+          status = 'completed';
+          break;
         }
       }
-      currentTurn.closed = true;
+
+      dartsInTurn++;
+
+      if (dartsInTurn >= dpt) {
+        if (!advOnHit) {
+          // '1-dart per target': always advances
+          if (alwaysAdv) {
+            currentTurn.advanced = true;
+            targetIndex++;
+            if (targetIndex >= targetSequence.length) {
+              winnerParticipantId = p.participantId;
+              status = 'completed';
+            }
+          }
+        }
+        currentTurn.dartsInTurn = dartsInTurn;
+        currentTurn.closed = true;
+        dartsInTurn = 0;
+        hitsInTurn = 0;
+      }
+    } else {
+      // Group B: one turn per event ('3 darts per target', '3-darts until hit N')
+      const ht = p.hitsInTurn;
+      const advances = alwaysAdv || ht >= hitsRequired;
+
+      const turn: RtwTurn = {
+        participantId: p.participantId,
+        targetIndexAtStart: targetIndex,
+        hitsInTurn: ht,
+        dartsInTurn: 3,
+        closed: true,
+        advanced: advances
+      };
+      turns.push(turn);
+      currentTurn = turn;
+
+      if (advances) {
+        targetIndex++;
+        if (targetIndex >= targetSequence.length) {
+          winnerParticipantId = p.participantId;
+          status = 'completed';
+        }
+      }
+
       dartsInTurn = 0;
       hitsInTurn = 0;
     }

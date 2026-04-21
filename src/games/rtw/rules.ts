@@ -1,5 +1,5 @@
-import type { ThrowSegment } from '@/domain/types';
 import type { RtwConfig, RtwGameType, RtwMode } from './config';
+import type { ThrowSegment } from '@/domain/types';
 
 const DARTBOARD_CLOCKWISE = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5] as const;
 const SEQUENCE_1_20 = Array.from({ length: 20 }, (_, i) => i + 1);
