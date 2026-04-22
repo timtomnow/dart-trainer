@@ -15,18 +15,14 @@ export function computeRtwStats(
   const state = buildRtwState(events, config, session.participants, session.id);
 
   let dartsThrown = 0;
-  let targetsHit = 0;
 
   for (const turn of state.turns) {
     dartsThrown += turn.dartsInTurn;
-    if (turn.hitsInTurn > 0) targetsHit++;
   }
 
+  const targetsHit = state.currentTargetIndex;
   const targetsTotal = state.targetSequence.length;
-  const hitRatePct =
-    state.currentTargetIndex > 0
-      ? (targetsHit / state.currentTargetIndex) * 100
-      : null;
+  const hitRatePct = dartsThrown > 0 ? (targetsHit / dartsThrown) * 100 : null;
 
   const lastEvent = events[events.length - 1];
   const durationMs = lastEvent

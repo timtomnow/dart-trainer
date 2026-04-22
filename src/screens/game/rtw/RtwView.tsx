@@ -71,8 +71,8 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
   ).map((v) => (v === 25 ? 'Bull' : String(v)));
 
   const hitRate =
-    view.targetsHit > 0 && view.currentTargetIndex > 0
-      ? Math.round((view.targetsHit / view.currentTargetIndex) * 100)
+    view.totalDarts > 0
+      ? Math.round((view.targetsHit / view.totalDarts) * 100)
       : null;
 
   return (

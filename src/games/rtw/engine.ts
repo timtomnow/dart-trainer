@@ -2,7 +2,7 @@ import { RTW_GAME_ID } from './config';
 import type { RtwConfig } from './config';
 import { buildRtwState } from './replay';
 import { dartsPerTurn } from './rules';
-import type { RtwAction, RtwState, RtwThrowPayload, RtwTurn, RtwViewModel } from './types';
+import type { RtwAction, RtwState, RtwThrowPayload, RtwViewModel } from './types';
 import { isInputEventType } from '@/domain/events';
 import { CURRENT_SCHEMA_VERSION } from '@/domain/schemas/common';
 import type { GameEvent, GameEventType } from '@/domain/types';
@@ -118,7 +118,7 @@ function reduce(
 
 function view(state: RtwState): RtwViewModel {
   const totalDarts = state.turns.reduce((s, t) => s + t.dartsInTurn, 0);
-  const targetsHit = state.turns.filter((t: RtwTurn) => t.hitsInTurn > 0).length;
+  const targetsHit = state.currentTargetIndex;
   const dpt = dartsPerTurn(state.config.mode);
   const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
 
