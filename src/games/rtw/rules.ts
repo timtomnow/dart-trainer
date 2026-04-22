@@ -19,7 +19,7 @@ export function getTargetSequence(config: RtwConfig): number[] {
     }
   }
 
-  if (!config.excludeBull && config.gameType !== 'Triple') {
+  if (!config.excludeBull && config.gameType !== 'Triple' && config.order !== 'Random') {
     base = [...base, 25];
   }
 

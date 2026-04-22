@@ -13,7 +13,6 @@ import {
   type RtwGameType,
   type RtwMode,
   type RtwOrder,
-  getTargetSequence,
   seededShuffle
 } from '@/games/rtw';
 import {
@@ -157,7 +156,9 @@ export function PlayScreen() {
   const startRtw = async () => {
     let cfg = rtwConfig;
     if (cfg.order === 'Random') {
-      const base = getTargetSequence({ ...cfg, order: '1-20' });
+      const base = (cfg.excludeBull || cfg.gameType === 'Triple') 
+        ? Array.from({ length: 20 }, (_, i) => i + 1)
+        : [...Array.from({ length: 20 }, (_, i) => i + 1), 25];
       cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
     }
     await startSession(RTW_GAME_ID, cfg);
@@ -166,7 +167,9 @@ export function PlayScreen() {
   const startRtwScoring = async () => {
     let cfg = rtwScoringConfig;
     if (cfg.order === 'Random') {
-      const base = getTargetSequence({ ...cfg, order: '1-20' } as RtwConfig);
+      const base = (cfg.excludeBull || cfg.gameType === 'Triple') 
+        ? Array.from({ length: 20 }, (_, i) => i + 1)
+        : [...Array.from({ length: 20 }, (_, i) => i + 1), 25];
       cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
     }
     await startSession(RTW_SCORING_GAME_ID, cfg);
