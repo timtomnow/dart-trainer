@@ -1,6 +1,7 @@
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useCricketStats } from '@/hooks/useCricketStats';
 import { useRtwStats } from '@/hooks/useRtwStats';
+import type { RtwGroupedStats, RtwScoringGroupedStats } from '@/hooks/useRtwStats';
 import { useStats } from '@/hooks/useStats';
 import type { AggregateStats, TrendPoint } from '@/hooks/useStats';
 import { fmtAvg, fmtPct } from '@/stats/formatters';
@@ -130,7 +131,7 @@ export function StatsScreen() {
   const profileId = settings?.activeProfileId ?? null;
   const { loading, aggregate, trend } = useStats(profileId);
   const { loading: cricketLoading, aggregate: cricketAggregate } = useCricketStats(profileId);
-  const { loading: rtwLoading, rtwAggregate, rtwScoringAggregate } = useRtwStats(profileId);
+  const { loading: rtwLoading, rtwGroups, rtwScoringGroups } = useRtwStats(profileId);
 
   return (
     <section className="mx-auto max-w-3xl space-y-6">
@@ -186,34 +187,34 @@ export function StatsScreen() {
         </div>
       )}
 
-      {profileId && !rtwLoading && rtwAggregate && (
-        <div>
+      {profileId && !rtwLoading && rtwGroups.map(({ key, agg }: RtwGroupedStats) => (
+        <div key={`${key.gameType}|${key.mode}`}>
           <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
-            Round the World — last {rtwAggregate.sessionCount} session{rtwAggregate.sessionCount !== 1 ? 's' : ''}
+            RTW — {key.gameType} / {key.mode} — last {agg.sessionCount} session{agg.sessionCount !== 1 ? 's' : ''}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <KpiCard label="Avg targets hit" value={rtwAggregate.avgTargetsHit.toFixed(1)} />
+            <KpiCard label="Avg targets hit" value={agg.avgTargetsHit.toFixed(1)} />
             <KpiCard
               label="Hit rate"
-              value={rtwAggregate.avgHitRatePct !== null ? fmtPct(rtwAggregate.avgHitRatePct) : '—'}
+              value={agg.avgHitRatePct !== null ? fmtPct(agg.avgHitRatePct) : '—'}
             />
-            <KpiCard label="Sessions" value={String(rtwAggregate.sessionCount)} />
+            <KpiCard label="Sessions" value={String(agg.sessionCount)} />
           </div>
         </div>
-      )}
+      ))}
 
-      {profileId && !rtwLoading && rtwScoringAggregate && (
-        <div>
+      {profileId && !rtwLoading && rtwScoringGroups.map(({ key, agg }: RtwScoringGroupedStats) => (
+        <div key={`scoring|${key.gameType}|${key.mode}`}>
           <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
-            RTW Scoring — last {rtwScoringAggregate.sessionCount} session{rtwScoringAggregate.sessionCount !== 1 ? 's' : ''}
+            RTW Scoring — {key.gameType} / {key.mode} — last {agg.sessionCount} session{agg.sessionCount !== 1 ? 's' : ''}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <KpiCard label="Avg score" value={rtwScoringAggregate.avgScore.toFixed(0)} />
-            <KpiCard label="Best score" value={String(rtwScoringAggregate.bestScore)} />
-            <KpiCard label="Sessions" value={String(rtwScoringAggregate.sessionCount)} />
+            <KpiCard label="Avg score" value={agg.avgScore.toFixed(0)} />
+            <KpiCard label="Best score" value={String(agg.bestScore)} />
+            <KpiCard label="Sessions" value={String(agg.sessionCount)} />
           </div>
         </div>
-      )}
+      ))}
     </section>
   );
 }

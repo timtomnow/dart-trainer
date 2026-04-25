@@ -20,7 +20,10 @@ export function computeRtwStats(
     dartsThrown += turn.dartsInTurn;
   }
 
-  const targetsHit = state.currentTargetIndex;
+  const targetsHit =
+    config.mode === '1-dart per target'
+      ? state.turns.filter((t) => t.hitsInTurn > 0).length
+      : state.currentTargetIndex;
   const targetsTotal = state.targetSequence.length;
   const hitRatePct = dartsThrown > 0 ? (targetsHit / dartsThrown) * 100 : null;
 

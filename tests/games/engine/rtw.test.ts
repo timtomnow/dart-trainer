@@ -129,24 +129,24 @@ describe('rtwEngine — mode: Hit once', () => {
     const actions: RtwAction[] = [miss(), hit(), miss()];
     const { state } = run(s0, actions, seeds);
     expect(state.currentTargetIndex).toBe(1);
-    expect(rtwEngine.view(state).dartsInCurrentTurn).toBe(0); // turn closed after 3 darts
+    expect(rtwEngine.view(state).dartsInCurrentTurn).toBe(0); // each dart is its own closed turn
   });
 
-  it('can advance multiple targets in one 3-dart turn', () => {
+  it('each hit advances one target', () => {
     const s0 = init({ mode: 'Hit once', excludeBull: true });
-    // 3 hits in a row → advance 3 targets
+    // 3 hits in a row → advance 3 targets, one per dart
     const actions: RtwAction[] = [hit(), hit(), hit()];
     const { state } = run(s0, actions, makeSeeds(seededIds(3)));
     expect(state.currentTargetIndex).toBe(3);
   });
 
-  it('turn closes after 3 darts even if advancing', () => {
+  it('each dart closes its own turn', () => {
     const s0 = init({ mode: 'Hit once', excludeBull: true });
     const { state } = run(s0, [hit(), hit(), hit()], makeSeeds(seededIds(3)));
     const v = rtwEngine.view(state);
     expect(v.dartsInCurrentTurn).toBe(0);
-    expect(state.turns).toHaveLength(1);
-    expect(state.turns[0]!.closed).toBe(true);
+    expect(state.turns).toHaveLength(3); // one turn per dart
+    expect(state.turns.every((t) => t.closed)).toBe(true);
   });
 });
 
@@ -449,21 +449,23 @@ describe('rtwEngine.view', () => {
     expect(rtwEngine.view(state).currentTarget).toBeNull();
   });
 
-  it('targetsHit counts turns with at least one hit', () => {
+  it('targetsHit equals currentTargetIndex (targets advanced past)', () => {
     const s0 = init({ mode: '3 darts per target', excludeBull: true });
-    // Turn 1: 1 hit → counts. Turn 2: 0 hits → doesn't count.
+    // Both turns always advance in this mode regardless of hit count.
     const actions: RtwAction[] = [turn(1), turn(0)];
     const { state } = run(s0, actions, makeSeeds(seededIds(actions.length)));
-    expect(rtwEngine.view(state).targetsHit).toBe(1);
+    expect(rtwEngine.view(state).targetsHit).toBe(2);
   });
 
-  it('dartsPerTurn is 1 for 1-dart per target mode', () => {
-    const s0 = init({ mode: '1-dart per target', excludeBull: true });
-    expect(rtwEngine.view(s0).dartsPerTurn).toBe(1);
+  it('dartsPerTurn is 1 for Hit once and 1-dart per target', () => {
+    for (const mode of ['Hit once', '1-dart per target'] as const) {
+      const s0 = init({ mode, excludeBull: true });
+      expect(rtwEngine.view(s0).dartsPerTurn).toBe(1);
+    }
   });
 
-  it('dartsPerTurn is 3 for all other modes', () => {
-    for (const mode of ['Hit once', '3 darts per target', '3-darts until hit 1'] as const) {
+  it('dartsPerTurn is 3 for 3-dart modes', () => {
+    for (const mode of ['3 darts per target', '3-darts until hit 1'] as const) {
       const s0 = init({ mode, excludeBull: true });
       expect(rtwEngine.view(s0).dartsPerTurn).toBe(3);
     }

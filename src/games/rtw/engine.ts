@@ -118,7 +118,11 @@ function reduce(
 
 function view(state: RtwState): RtwViewModel {
   const totalDarts = state.turns.reduce((s, t) => s + t.dartsInTurn, 0);
-  const targetsHit = state.currentTargetIndex;
+  // In '1-dart per target' the target always advances; only count turns where the player actually hit
+  const targetsHit =
+    state.config.mode === '1-dart per target'
+      ? state.turns.filter((t) => t.hitsInTurn > 0).length
+      : state.currentTargetIndex;
   const dpt = dartsPerTurn(state.config.mode);
   const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
 

@@ -79,7 +79,7 @@ export function dartScore(segment: ThrowSegment, value: number, target: number):
 }
 
 export function dartsPerTurn(mode: RtwMode): number {
-  return mode === '1-dart per target' ? 1 : 3;
+  return mode === '1-dart per target' || mode === 'Hit once' ? 1 : 3;
 }
 
 // True when a hit should immediately advance the target mid-turn

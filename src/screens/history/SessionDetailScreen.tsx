@@ -229,7 +229,7 @@ function EventLogPanel({ events }: { events: GameEvent[] }) {
               data-testid={`event-row-${ev.seq}`}
             >
               <td className="py-1.5 pr-3 tabular-nums text-slate-400">{ev.seq}</td>
-              <td className="py-1.5 pr-3 font-medium">{ev.type}</td>
+              <td className="py-1.5 pr-3 font-medium">{displayEventType(ev.type, ev.payload)}</td>
               <td className="py-1.5 pr-3 text-slate-500 dark:text-slate-400">
                 {summarisePayload(ev.type, ev.payload)}
               </td>
@@ -244,10 +244,24 @@ function EventLogPanel({ events }: { events: GameEvent[] }) {
   );
 }
 
+function isRtwGroupBPayload(p: Record<string, unknown>): boolean {
+  return 'hitsInTurn' in p && 'targetValue' in p;
+}
+
+function isRtwGroupAPayload(p: Record<string, unknown>): boolean {
+  return 'hit' in p && 'targetValue' in p;
+}
+
 function summarisePayload(type: string, payload: unknown): string {
   if (!payload || typeof payload !== 'object') return '';
   const p = payload as Record<string, unknown>;
   if (type === 'throw') {
+    if (isRtwGroupBPayload(p)) {
+      return `T${p['targetValue']} — ${p['hitsInTurn']}/3 hits`;
+    }
+    if (isRtwGroupAPayload(p)) {
+      return `T${p['targetValue']} — ${p['hit'] ? 'hit' : 'miss'}`;
+    }
     const seg = String(p['segment'] ?? '');
     const val = p['value'];
     return `${seg}${val}`;
@@ -255,6 +269,13 @@ function summarisePayload(type: string, payload: unknown): string {
   if (type === 'forfeit') return `pid:${String(p['participantId'] ?? '').slice(-4)}`;
   if (type === 'note') return String(p['text'] ?? '').slice(0, 40);
   return JSON.stringify(payload).slice(0, 60);
+}
+
+function displayEventType(type: string, payload: unknown): string {
+  if (type === 'throw' && payload && typeof payload === 'object') {
+    if (isRtwGroupBPayload(payload as Record<string, unknown>)) return 'turn';
+  }
+  return type;
 }
 
 function SessionDetailContent({

@@ -88,13 +88,13 @@ describe('computeRtwStats', () => {
     expect(stats.hitRatePct).toBeNull();
   });
 
-  it('counts targets hit correctly — 3 darts per target mode', () => {
-    // Turn 1 at target 1: 1 hit → advance. Turn 2 at target 2: 0 hits → advance. Turn 3 at target 3: 1 hit → advance.
+  it('counts targets advanced correctly — 3 darts per target mode', () => {
+    // All 3 turns advance regardless of hit count; targetsHit = currentTargetIndex = 3.
     const config: RtwConfig = { ...RTW_DEFAULT_CONFIG, mode: '3 darts per target', excludeBull: true };
     const actions: RtwGroupBAction[] = [
-      { hitsInTurn: 1 }, // hit on target 1
-      { hitsInTurn: 0 }, // miss on target 2
-      { hitsInTurn: 1 }  // hit on target 3
+      { hitsInTurn: 1 }, // advance (1 hit)
+      { hitsInTurn: 0 }, // advance (0 hits)
+      { hitsInTurn: 1 }  // advance (1 hit)
     ];
     const { events } = buildRtwGroupBEvents(config, actions);
     const stats = computeRtwStats(events, config, {
@@ -104,9 +104,9 @@ describe('computeRtwStats', () => {
     });
 
     expect(stats.dartsThrown).toBe(9); // 3 turns × 3 darts
-    expect(stats.targetsHit).toBe(2);
+    expect(stats.targetsHit).toBe(3);
     expect(stats.targetsTotal).toBe(20); // excludeBull, 20 targets
-    expect(stats.hitRatePct).toBeCloseTo((2 / 3) * 100, 0);
+    expect(stats.hitRatePct).toBeCloseTo((3 / 9) * 100, 0);
   });
 
   it('marks session as completed and reports correct darts thrown (1-dart per target)', () => {
