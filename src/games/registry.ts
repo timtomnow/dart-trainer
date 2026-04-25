@@ -1,3 +1,4 @@
+import { checkoutEngine } from './checkout';
 import { cricketEngine } from './cricket';
 import type { GameEngine } from './engine';
 import { freeformEngine } from './freeform';
@@ -10,7 +11,8 @@ export const GAME_REGISTRY = {
   x01: x01Engine,
   cricket: cricketEngine,
   rtw: rtwEngine,
-  'rtw-scoring': rtwScoringEngine
+  'rtw-scoring': rtwScoringEngine,
+  checkout: checkoutEngine
 } as const;
 
 export type GameModeId = keyof typeof GAME_REGISTRY;

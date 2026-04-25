@@ -1,10 +1,12 @@
 import { useCallback } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { CheckoutView } from './checkout/CheckoutView';
 import { CricketView } from './cricket/CricketView';
 import { FreeformView } from './freeform/FreeformView';
 import { RtwView } from './rtw/RtwView';
 import { RtwScoringView } from './rtw-scoring/RtwScoringView';
 import { X01View } from './x01/X01View';
+import type { CheckoutAction, CheckoutViewModel } from '@/games/checkout';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
 import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
@@ -88,6 +90,18 @@ export function GameScreen() {
       <RtwScoringView
         view={view as RtwScoringViewModel}
         dispatch={dispatch as (a: RtwScoringAction) => Promise<void>}
+        undo={undo}
+        forfeit={forfeit}
+        onPlayAgain={handlePlayAgain}
+      />
+    );
+  }
+
+  if (session.gameModeId === 'checkout') {
+    return (
+      <CheckoutView
+        view={view as CheckoutViewModel}
+        dispatch={dispatch as (a: CheckoutAction) => Promise<void>}
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}

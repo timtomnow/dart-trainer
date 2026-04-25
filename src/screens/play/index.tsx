@@ -2,6 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Session } from '@/domain/types';
 import {
+  CHECKOUT_DEFAULT_CONFIG,
+  CHECKOUT_GAME_ID,
+  type CheckoutConfig,
+  type CheckoutMode,
+  type CheckoutOutRule,
+  seededShuffle as checkoutShuffle
+} from '@/games/checkout';
+import {
   CRICKET_DEFAULT_CONFIG,
   CRICKET_GAME_ID,
   type CricketConfig
@@ -32,6 +40,12 @@ import {
   type X01StartScore
 } from '@/games/x01';
 import { useKeypadLayout, useProfile, useSessions } from '@/hooks';
+
+// Common checkout finishes grouped by range
+const HIGH_FINISHES = [170, 167, 164, 161, 160, 158, 157, 130, 127, 120, 110, 100];
+const MID_FINISHES = [99, 81, 70, 60, 50];
+const LOW_FINISHES = [40, 32, 24, 20, 16, 10, 8, 6, 4, 2];
+const ALL_COMMON_FINISHES = [...HIGH_FINISHES, ...MID_FINISHES, ...LOW_FINISHES];
 
 function ResumeCard({
   session,
@@ -88,6 +102,7 @@ export function PlayScreen() {
   const [cricketConfig, setCricketConfig] = useState<CricketConfig>(CRICKET_DEFAULT_CONFIG);
   const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
   const [rtwScoringConfig, setRtwScoringConfig] = useState<RtwScoringConfig>(RTW_SCORING_DEFAULT_CONFIG);
+  const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig>(CHECKOUT_DEFAULT_CONFIG);
   const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +135,13 @@ export function PlayScreen() {
     ) ?? null;
   }, [sessions, profile]);
 
+  const resumableCheckout = useMemo(() => {
+    if (!profile) return null;
+    return sessions.find(
+      (s) => s.gameModeId === CHECKOUT_GAME_ID && s.participants.includes(profile.id)
+    ) ?? null;
+  }, [sessions, profile]);
+
   const discardExisting = async (existingSession: Session) => {
     const confirmed = window.confirm(
       'Permanently discard this in-progress session? This cannot be undone.'
@@ -135,7 +157,7 @@ export function PlayScreen() {
 
   const startSession = async (
     gameModeId: string,
-    gameConfig: X01Config | CricketConfig | RtwConfig | RtwScoringConfig
+    gameConfig: X01Config | CricketConfig | RtwConfig | RtwScoringConfig | CheckoutConfig
   ) => {
     if (!profile) return;
     setStarting(true);
@@ -162,6 +184,22 @@ export function PlayScreen() {
       cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
     }
     await startSession(RTW_GAME_ID, cfg);
+  };
+
+  const startCheckout = async () => {
+    let cfg = checkoutConfig;
+    if (cfg.mode === 'random') {
+      cfg = { ...cfg, orderedFinishes: checkoutShuffle(cfg.finishes, String(Date.now())) };
+    }
+    await startSession(CHECKOUT_GAME_ID, cfg);
+  };
+
+  const toggleFinish = (n: number) => {
+    setCheckoutConfig((c) => {
+      const has = c.finishes.includes(n);
+      const next = has ? c.finishes.filter((f) => f !== n) : [...c.finishes, n].sort((a, b) => b - a);
+      return { ...c, finishes: next.length > 0 ? next : c.finishes };
+    });
   };
 
   const startRtwScoring = async () => {
@@ -550,6 +588,128 @@ export function PlayScreen() {
               data-testid="rtws-start"
             >
               {starting ? 'Starting…' : 'Start RTW Scoring'}
+            </button>
+          </>
+        )}
+      </div>
+      {/* ── Checkout Practice ─────────────────────────────────────────────── */}
+      <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <h2 className="text-lg font-semibold">Checkout Practice</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Practice finishing darts. Select finishes, set attempts, and track your hit rate.
+        </p>
+
+        {resumableCheckout ? (
+          <div className="mt-4">
+            <ResumeCard
+              session={resumableCheckout}
+              label="Checkout Practice"
+              onResume={() => navigate(`/game/${resumableCheckout.id}`)}
+              onStartNew={() => void discardExisting(resumableCheckout)}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Mode</span>
+                <select
+                  className={SELECT_CLS}
+                  value={checkoutConfig.mode}
+                  onChange={(e) =>
+                    setCheckoutConfig((c) => ({ ...c, mode: e.target.value as CheckoutMode }))
+                  }
+                  data-testid="checkout-mode"
+                >
+                  <option value="targeted">Targeted (in order)</option>
+                  <option value="random">Random</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Attempts per finish</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  className={SELECT_CLS}
+                  value={checkoutConfig.attemptsPerFinish}
+                  onChange={(e) =>
+                    setCheckoutConfig((c) => ({
+                      ...c,
+                      attemptsPerFinish: Math.max(1, Math.min(10, Number(e.target.value) || 1))
+                    }))
+                  }
+                  data-testid="checkout-attempts-per-finish"
+                />
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Out rule</span>
+                <select
+                  className={SELECT_CLS}
+                  value={checkoutConfig.outRule}
+                  onChange={(e) =>
+                    setCheckoutConfig((c) => ({ ...c, outRule: e.target.value as CheckoutOutRule }))
+                  }
+                  data-testid="checkout-out-rule"
+                >
+                  <option value="double">Double out</option>
+                  <option value="masters">Masters out</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Finishes</span>
+                <span className="flex gap-3">
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    onClick={() => setCheckoutConfig((c) => ({ ...c, finishes: ALL_COMMON_FINISHES.slice() }))}
+                  >
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    onClick={() => setCheckoutConfig((c) => ({ ...c, finishes: CHECKOUT_DEFAULT_CONFIG.finishes }))}
+                  >
+                    Reset
+                  </button>
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5" data-testid="checkout-finish-selector">
+                {ALL_COMMON_FINISHES.map((n) => {
+                  const selected = checkoutConfig.finishes.includes(n);
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => toggleFinish(n)}
+                      className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                        selected
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                      data-testid={`checkout-finish-${n}`}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void startCheckout()}
+              disabled={!profile || starting || checkoutConfig.finishes.length === 0}
+              className="mt-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="checkout-start"
+            >
+              {starting ? 'Starting…' : 'Start Checkout'}
             </button>
           </>
         )}

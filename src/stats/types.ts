@@ -18,6 +18,25 @@ export type CricketSessionStats = {
   durationMs: number;
 };
 
+export type CheckoutPerFinishStats = {
+  finish: number;
+  attempts: number;
+  successes: number;
+  successRate: number | null;
+  bestDarts: number | null;
+};
+
+export type CheckoutSessionStats = {
+  successRate: number | null;
+  successCount: number;
+  totalAttempts: number;
+  perFinish: CheckoutPerFinishStats[];
+  dartsTaken: number[];
+  avgDartsOnSuccess: number | null;
+  hardestFinishHit: number | null;
+  durationMs: number;
+};
+
 export type X01SessionStats = {
   threeDartAvg: number;
   firstNineAvg: number | null;

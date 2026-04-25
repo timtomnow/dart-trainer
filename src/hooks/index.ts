@@ -11,3 +11,8 @@ export { useSessionEvents, type UseSessionEventsResult } from './useSessionEvent
 export { useSessionDetail, type UseSessionDetailResult } from './useSessionDetail';
 export { useStats, type UseStatsResult, type AggregateStats, type TrendPoint } from './useStats';
 export { useKeypadLayout, type UseKeypadLayoutResult } from './useKeypadLayout';
+export {
+  useCheckoutStats,
+  type UseCheckoutStatsResult,
+  type CheckoutAggStats
+} from './useCheckoutStats';
