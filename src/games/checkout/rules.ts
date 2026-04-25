@@ -1,5 +1,5 @@
-import type { ThrowSegment } from '@/domain/types';
 import type { CheckoutConfig, CheckoutOutRule } from './config';
+import type { ThrowSegment } from '@/domain/types';
 
 export function dartScore(segment: ThrowSegment, value: number): number {
   return segment === 'MISS' ? 0 : value;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { EngineSeeds } from '@/games/engine';
+import type { GameEvent } from '@/domain/types';
 import type { CheckoutConfig } from '@/games/checkout/config';
 import { checkoutEngine } from '@/games/checkout/engine';
 import type { CheckoutAction } from '@/games/checkout/types';
+import type { EngineSeeds } from '@/games/engine';
 import { computeCheckoutStats } from '@/stats/checkoutStats';
-import type { GameEvent } from '@/domain/types';
 
 const SESSION_ID = '01JCOKSTAT0SESSION00000000';
 const P1 = '01JCOKSTAT0PLAYER10000000';

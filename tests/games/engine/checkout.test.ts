@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { EngineSeeds } from '@/games/engine';
 import type { CheckoutConfig } from '@/games/checkout/config';
 import { CHECKOUT_DEFAULT_CONFIG } from '@/games/checkout/config';
 import { checkoutEngine } from '@/games/checkout/engine';
 import { seededShuffle } from '@/games/checkout/rules';
 import type { CheckoutAction } from '@/games/checkout/types';
+import type { EngineSeeds } from '@/games/engine';
 
 const SESSION = '01JCOKOUT0SESSION000000000';
 const P1 = '01JCOKOUT0PLAYER100000000';
