@@ -27,8 +27,6 @@ import {
   RTW_SCORING_DEFAULT_CONFIG,
   RTW_SCORING_GAME_ID,
   type RtwScoringConfig,
-  type RtwScoringGameType,
-  type RtwScoringMode,
   type RtwScoringOrder
 } from '@/games/rtw-scoring';
 import {
@@ -205,9 +203,7 @@ export function PlayScreen() {
   const startRtwScoring = async () => {
     let cfg = rtwScoringConfig;
     if (cfg.order === 'Random') {
-      const base = (cfg.excludeBull || cfg.gameType === 'Triple') 
-        ? Array.from({ length: 20 }, (_, i) => i + 1)
-        : [...Array.from({ length: 20 }, (_, i) => i + 1), 25];
+      const base = [...Array.from({ length: 20 }, (_, i) => i + 1), 25];
       cfg = { ...cfg, customSequence: seededShuffle(base, String(Date.now())) };
     }
     await startSession(RTW_SCORING_GAME_ID, cfg);
@@ -489,7 +485,7 @@ export function PlayScreen() {
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
         <h2 className="text-lg font-semibold">RTW Scoring</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Round the World with weighted scoring: single=1×, double=2×, triple=3×.
+          Round the World — 21 targets (1–20 + Bull). 3 darts per target, scored by throw quality: Miss=0, Single=1, Double=2, Triple=3 points.
         </p>
 
         {resumableRtwScoring ? (
@@ -504,46 +500,6 @@ export function PlayScreen() {
         ) : (
           <>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Game type</span>
-                <select
-                  className={SELECT_CLS}
-                  value={rtwScoringConfig.gameType}
-                  onChange={(e) =>
-                    setRtwScoringConfig((c) => ({
-                      ...c,
-                      gameType: e.target.value as RtwScoringGameType
-                    }))
-                  }
-                  data-testid="rtws-game-type"
-                >
-                  <option value="Single">Single</option>
-                  <option value="Single Inner">Single Inner</option>
-                  <option value="Single Outer">Single Outer</option>
-                  <option value="Double">Double</option>
-                  <option value="Triple">Triple</option>
-                </select>
-              </label>
-
-              <label className="text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Mode</span>
-                <select
-                  className={SELECT_CLS}
-                  value={rtwScoringConfig.mode}
-                  onChange={(e) =>
-                    setRtwScoringConfig((c) => ({ ...c, mode: e.target.value as RtwScoringMode }))
-                  }
-                  data-testid="rtws-mode"
-                >
-                  <option value="Hit once">Hit once</option>
-                  <option value="3 darts per target">3 darts per target</option>
-                  <option value="1-dart per target">1-dart per target</option>
-                  <option value="3-darts until hit 1">3-darts until hit 1</option>
-                  <option value="3-darts until hit 2">3-darts until hit 2</option>
-                  <option value="3-darts until hit 3">3-darts until hit 3</option>
-                </select>
-              </label>
-
               <label className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Order</span>
                 <select
@@ -564,20 +520,6 @@ export function PlayScreen() {
                   <option value="Random">Random</option>
                 </select>
               </label>
-
-              {rtwScoringConfig.gameType !== 'Triple' && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={rtwScoringConfig.excludeBull}
-                    onChange={(e) =>
-                      setRtwScoringConfig((c) => ({ ...c, excludeBull: e.target.checked }))
-                    }
-                    data-testid="rtws-exclude-bull"
-                  />
-                  <span className="text-slate-700 dark:text-slate-300">Exclude bull</span>
-                </label>
-              )}
             </div>
 
             <button

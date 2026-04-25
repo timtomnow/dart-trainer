@@ -47,19 +47,15 @@ export function computeRtwScoringStats(
 
   for (const turn of state.turns) {
     dartsThrown += turn.darts.length;
-    if (turn.darts.some((d) => d.isHit)) targetsHit++;
+    if (turn.darts.some((d) => d.score > 0)) targetsHit++;
   }
 
   const targetsTotal = state.targetSequence.length;
-  const hitRatePct =
-    state.currentTargetIndex > 0
-      ? (targetsHit / state.currentTargetIndex) * 100
-      : null;
 
   const lastEvent = events[events.length - 1];
   const durationMs = lastEvent
     ? new Date(lastEvent.timestamp).getTime() - new Date(session.startedAt).getTime()
     : 0;
 
-  return { targetsHit, targetsTotal, dartsThrown, hitRatePct, durationMs, totalScore: state.totalScore };
+  return { targetsHit, targetsTotal, dartsThrown, totalScore: state.totalScore, durationMs };
 }

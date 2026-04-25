@@ -204,13 +204,13 @@ export function StatsScreen() {
       ))}
 
       {profileId && !rtwLoading && rtwScoringGroups.map(({ key, agg }: RtwScoringGroupedStats) => (
-        <div key={`scoring|${key.gameType}|${key.mode}`}>
+        <div key={`scoring|${key.order}`}>
           <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
-            RTW Scoring — {key.gameType} / {key.mode} — last {agg.sessionCount} session{agg.sessionCount !== 1 ? 's' : ''}
+            RTW Scoring — {key.order} — last {agg.sessionCount} session{agg.sessionCount !== 1 ? 's' : ''}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <KpiCard label="Avg score" value={agg.avgScore.toFixed(0)} />
-            <KpiCard label="Best score" value={String(agg.bestScore)} />
+            <KpiCard label="Avg points" value={agg.avgScore.toFixed(0)} />
+            <KpiCard label="Best points" value={String(agg.bestScore)} />
             <KpiCard label="Sessions" value={String(agg.sessionCount)} />
           </div>
         </div>

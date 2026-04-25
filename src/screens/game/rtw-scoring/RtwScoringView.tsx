@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwScoringKeypad } from './RtwScoringKeypad';
-import type { ThrowSegment } from '@/domain/types';
-import type { RtwScoringAction, RtwScoringViewModel } from '@/games/rtw-scoring';
+import type { RtwScoringAction, RtwScoringMultiplier, RtwScoringViewModel } from '@/games/rtw-scoring';
 
 type Props = {
   view: RtwScoringViewModel;
@@ -53,17 +52,12 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
     }
   };
 
-  const onDart = (segment: ThrowSegment, value: number) =>
+  const onThrow = (multiplier: RtwScoringMultiplier) =>
     run(() =>
-      dispatch({ type: 'throw', participantId: view.activeParticipantId, segment, value })
+      dispatch({ type: 'throw', participantId: view.activeParticipantId, multiplier })
     );
 
   const isOver = view.status !== 'in_progress';
-  const hasBull = view.targetSequence.includes(25);
-  const hitRate =
-    view.targetsHit > 0 && view.currentTargetIndex > 0
-      ? Math.round((view.targetsHit / view.currentTargetIndex) * 100)
-      : null;
 
   return (
     <section className="mx-auto max-w-xl pb-6">
@@ -74,36 +68,23 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
         </span>
       </div>
 
-      {/* Score + current target */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Score</p>
-          <p className="mt-1 text-4xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400" data-testid="rtws-score">
-            {view.totalScore}
-          </p>
-          {view.currentTurnScore > 0 && (
-            <p className="mt-0.5 text-sm text-slate-500" data-testid="rtws-turn-score">
-              +{view.currentTurnScore} this turn
-            </p>
-          )}
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            {isOver ? (view.status === 'completed' ? 'Completed' : 'Forfeited') : 'Target'}
-          </p>
-          <p className="mt-1 text-4xl font-bold tabular-nums text-blue-600 dark:text-blue-400" data-testid="rtws-target">
-            {isOver
-              ? view.currentTargetIndex
-              : view.currentTarget === 25
-                ? 'Bull'
-                : view.currentTarget}
-          </p>
-          {!isOver && (
-            <div className="mt-2 flex justify-center">
-              <DartDots filled={view.dartsInCurrentTurn} total={view.dartsPerTurn} />
-            </div>
-          )}
-        </div>
+      {/* Current target */}
+      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          {isOver ? (view.status === 'completed' ? 'Completed' : 'Forfeited') : 'Target'}
+        </p>
+        <p className="mt-1 text-4xl font-bold tabular-nums text-blue-600 dark:text-blue-400" data-testid="rtws-target">
+          {isOver
+            ? view.currentTargetIndex
+            : view.currentTarget === 25
+              ? 'Bull'
+              : view.currentTarget}
+        </p>
+        {!isOver && (
+          <div className="mt-2 flex justify-center">
+            <DartDots filled={view.dartsInCurrentTurn} total={3} />
+          </div>
+        )}
       </div>
 
       {/* Stats strip */}
@@ -115,9 +96,9 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Hit rate</dt>
-          <dd className="font-semibold tabular-nums" data-testid="rtws-hit-rate">
-            {hitRate !== null ? `${hitRate}%` : '—'}
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Points</dt>
+          <dd className="font-semibold tabular-nums" data-testid="rtws-points">
+            {view.totalScore}
           </dd>
         </div>
         <div>
@@ -129,10 +110,9 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
       </dl>
 
       <RtwScoringKeypad
-        onDart={onDart}
+        onThrow={onThrow}
         disabled={isOver}
         currentTarget={view.currentTarget}
-        showBull={hasBull}
       />
 
       {!sessionDone && (
@@ -179,8 +159,8 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
           </h2>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
             <div>
-              <dt className="text-xs text-slate-500">Final score</dt>
-              <dd className="text-2xl font-bold text-emerald-600">{view.totalScore}</dd>
+              <dt className="text-xs text-slate-500">Points</dt>
+              <dd className="text-2xl font-bold text-emerald-600" data-testid="rtws-end-points">{view.totalScore}</dd>
             </div>
             <div>
               <dt className="text-xs text-slate-500">Targets hit</dt>

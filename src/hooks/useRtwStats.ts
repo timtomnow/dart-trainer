@@ -3,6 +3,7 @@ import { useStorage } from '@/app/providers/StorageProvider';
 import type { Session } from '@/domain/types';
 import type { RtwGameType, RtwMode } from '@/games/rtw/config';
 import { parseRtwConfig } from '@/games/rtw/config';
+import type { RtwScoringOrder } from '@/games/rtw-scoring/config';
 import { parseRtwScoringConfig } from '@/games/rtw-scoring/config';
 import { computeRtwStats, computeRtwScoringStats } from '@/stats/rtwStats';
 import type { RtwScoringSessionStats, RtwSessionStats } from '@/stats/types';
@@ -17,12 +18,16 @@ export type RtwAggStats = {
   avgDartsThrown: number;
 };
 
-export type RtwScoringAggStats = RtwAggStats & {
+export type RtwScoringAggStats = {
+  sessionCount: number;
+  avgTargetsHit: number;
+  avgDartsThrown: number;
   avgScore: number;
   bestScore: number;
 };
 
 export type RtwGroupKey = { gameType: RtwGameType; mode: RtwMode };
+export type RtwScoringGroupKey = { order: RtwScoringOrder };
 
 export type RtwGroupedStats = {
   key: RtwGroupKey;
@@ -30,7 +35,7 @@ export type RtwGroupedStats = {
 };
 
 export type RtwScoringGroupedStats = {
-  key: RtwGroupKey;
+  key: RtwScoringGroupKey;
   agg: RtwScoringAggStats;
 };
 
@@ -56,10 +61,11 @@ function aggregateRtw(all: RtwSessionStats[]): RtwAggStats {
 }
 
 function aggregateRtwScoring(all: RtwScoringSessionStats[]): RtwScoringAggStats {
-  const base = aggregateRtw(all);
+  const avgTargetsHit = all.reduce((s, x) => s + x.targetsHit, 0) / all.length;
+  const avgDartsThrown = all.reduce((s, x) => s + x.dartsThrown, 0) / all.length;
   const avgScore = all.reduce((s, x) => s + x.totalScore, 0) / all.length;
   const bestScore = Math.max(...all.map((x) => x.totalScore));
-  return { ...base, avgScore, bestScore };
+  return { sessionCount: all.length, avgTargetsHit, avgDartsThrown, avgScore, bestScore };
 }
 
 export function useRtwStats(profileId: string | null): UseRtwStatsResult {
@@ -103,15 +109,15 @@ export function useRtwStats(profileId: string | null): UseRtwStatsResult {
       Array.from(rtwBuckets.values()).map(({ key, stats }) => ({ key, agg: aggregateRtw(stats) }))
     );
 
-    const scoringBuckets = new Map<string, { key: RtwGroupKey; stats: RtwScoringSessionStats[] }>();
+    const scoringBuckets = new Map<string, { key: RtwScoringGroupKey; stats: RtwScoringSessionStats[] }>();
     for (const session of rtwScoringSessions.slice(0, LIMIT)) {
       let config;
       try { config = parseRtwScoringConfig(session.gameConfig); } catch { continue; }
       const events = await adapter.listEvents(session.id);
       if (events.length === 0) continue;
-      const k = groupKey(config.gameType, config.mode);
+      const k = config.order;
       if (!scoringBuckets.has(k)) {
-        scoringBuckets.set(k, { key: { gameType: config.gameType, mode: config.mode }, stats: [] });
+        scoringBuckets.set(k, { key: { order: config.order }, stats: [] });
       }
       scoringBuckets.get(k)!.stats.push(computeRtwScoringStats(events, config, session));
     }

@@ -1,7 +1,7 @@
 import { RTW_SCORING_GAME_ID } from './config';
 import type { RtwScoringConfig } from './config';
 import { buildRtwScoringState } from './replay';
-import { dartsPerTurn } from './rules';
+import { isInvalidForTarget } from './rules';
 import type {
   RtwScoringAction,
   RtwScoringState,
@@ -13,7 +13,6 @@ import { isInputEventType } from '@/domain/events';
 import { CURRENT_SCHEMA_VERSION } from '@/domain/schemas/common';
 import type { GameEvent, GameEventType } from '@/domain/types';
 import type { EngineReduceResult, EngineSeeds, GameEngine } from '@/games/engine';
-import { isValidDart } from '@/games/engine/common';
 
 function error(
   state: RtwScoringState,
@@ -73,15 +72,20 @@ function reduce(
     if (action.participantId !== state.activeParticipantId) {
       return error(state, 'wrong_turn', `Not this participant's turn: ${action.participantId}`);
     }
-    if (!isValidDart({ segment: action.segment, value: action.value })) {
-      return error(state, 'invalid_dart', `Invalid dart: ${action.segment}:${action.value}`);
+
+    const currentTarget = state.targetSequence[state.currentTargetIndex];
+    if (currentTarget === undefined) {
+      return error(state, 'no_target', 'No current target.');
+    }
+    if (isInvalidForTarget(action.multiplier, currentTarget)) {
+      return error(state, 'invalid_throw', 'Triple is not valid for Bull. Select Miss, Single, or Double.');
     }
 
     const payload: RtwScoringThrowPayload = {
       participantId: action.participantId,
-      segment: action.segment,
-      value: action.value,
+      multiplier: action.multiplier,
       targetIndex: state.currentTargetIndex,
+      targetValue: currentTarget,
       dartInTurn: state.dartsInCurrentTurn
     };
     const event = makeEvent(state.sessionId, nextSeq, 'throw', payload, seeds);
@@ -129,8 +133,7 @@ function reduce(
 
 function view(state: RtwScoringState): RtwScoringViewModel {
   const totalDarts = state.turns.reduce((s, t) => s + t.darts.length, 0);
-  const targetsHit = state.turns.filter((t: RtwScoringTurn) => t.darts.some((d) => d.isHit)).length;
-  const dpt = dartsPerTurn(state.config.mode);
+  const targetsHit = state.turns.filter((t: RtwScoringTurn) => t.darts.some((d) => d.score > 0)).length;
   const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
   const currentTurnScore =
     state.turns.length > 0 && !state.turns.at(-1)!.closed
@@ -144,7 +147,6 @@ function view(state: RtwScoringState): RtwScoringViewModel {
     currentTargetIndex: state.currentTargetIndex,
     currentTarget: state.targetSequence[state.currentTargetIndex] ?? null,
     dartsInCurrentTurn: state.dartsInCurrentTurn,
-    hitsInCurrentTurn: state.hitsInCurrentTurn,
     canUndo: state.inputEventLog.length > 0,
     activeParticipantId: state.activeParticipantId,
     winnerParticipantId: state.winnerParticipantId,
@@ -152,7 +154,6 @@ function view(state: RtwScoringState): RtwScoringViewModel {
     totalDarts,
     targetsHit,
     targetsTotal: state.targetSequence.length,
-    dartsPerTurn: dpt,
     totalScore: state.totalScore,
     currentTurnScore
   };

@@ -1,20 +1,14 @@
 import type { RtwScoringConfig } from './config';
-import {
-  advancesOnHit,
-  alwaysAdvances,
-  dartScore,
-  dartsPerTurn,
-  getTargetSequence,
-  hitsRequiredToAdvance,
-  isHit
-} from './rules';
-import type { RtwScoringDart, RtwScoringState, RtwScoringStatus, RtwScoringTurn } from './types';
-import type { GameEvent, ThrowSegment } from '@/domain/types';
+import { dartScore, getTargetSequence, isInvalidForTarget } from './rules';
+import type { RtwScoringDart, RtwScoringMultiplier, RtwScoringState, RtwScoringStatus, RtwScoringTurn } from './types';
+import type { GameEvent } from '@/domain/types';
 
 type ThrowPayload = {
   participantId: string;
-  segment: ThrowSegment;
-  value: number;
+  multiplier: RtwScoringMultiplier;
+  targetIndex: number;
+  targetValue: number;
+  dartInTurn: number;
 };
 
 export function buildRtwScoringState(
@@ -24,15 +18,10 @@ export function buildRtwScoringState(
   sessionId: string
 ): RtwScoringState {
   const targetSequence = getTargetSequence(config);
-  const dpt = dartsPerTurn(config.mode);
-  const advOnHit = advancesOnHit(config.mode);
-  const alwaysAdv = alwaysAdvances(config.mode);
-  const hitsRequired = hitsRequiredToAdvance(config.mode);
 
   const turns: RtwScoringTurn[] = [];
   let targetIndex = 0;
   let dartsInTurn = 0;
-  let hitsInTurn = 0;
   let totalScore = 0;
   let status: RtwScoringStatus = 'in_progress';
   let winnerParticipantId: string | undefined;
@@ -53,8 +42,9 @@ export function buildRtwScoringState(
     if (target === undefined) break;
 
     const p = ev.payload as ThrowPayload;
-    const hit = isHit(p.segment, p.value, target, config.gameType);
-    const scored = dartScore(p.segment, p.value, target);
+
+    // Triple bull is invalid — skip (engine guards this, but replay must tolerate missing events)
+    if (isInvalidForTarget(p.multiplier, target)) continue;
 
     if (!currentTurn || currentTurn.closed) {
       currentTurn = {
@@ -67,51 +57,32 @@ export function buildRtwScoringState(
       };
       turns.push(currentTurn);
       dartsInTurn = 0;
-      hitsInTurn = 0;
     }
 
+    const score = dartScore(p.multiplier);
     const dart: RtwScoringDart = {
       eventId: ev.id,
-      segment: p.segment,
-      value: p.value,
+      multiplier: p.multiplier,
+      score,
       targetIndex,
-      isHit: hit,
-      scored
+      targetValue: target
     };
     currentTurn.darts.push(dart);
-    currentTurn.turnScore += scored;
-    totalScore += scored;
-
-    if (hit) hitsInTurn++;
-
-    if (advOnHit && hit) {
-      currentTurn.advanced = true;
-      targetIndex++;
-      if (targetIndex >= targetSequence.length) {
-        currentTurn.closed = true;
-        winnerParticipantId = p.participantId;
-        status = 'completed';
-        break;
-      }
-    }
+    currentTurn.turnScore += score;
+    totalScore += score;
 
     dartsInTurn++;
 
-    if (dartsInTurn >= dpt) {
-      if (!advOnHit) {
-        const advances = alwaysAdv || hitsInTurn >= hitsRequired;
-        if (advances) {
-          currentTurn.advanced = true;
-          targetIndex++;
-          if (targetIndex >= targetSequence.length) {
-            winnerParticipantId = p.participantId;
-            status = 'completed';
-          }
-        }
-      }
+    if (dartsInTurn >= 3) {
+      currentTurn.advanced = true;
       currentTurn.closed = true;
+      targetIndex++;
       dartsInTurn = 0;
-      hitsInTurn = 0;
+
+      if (targetIndex >= targetSequence.length) {
+        winnerParticipantId = p.participantId;
+        status = 'completed';
+      }
     }
 
     if (status === 'completed') break;
@@ -128,7 +99,6 @@ export function buildRtwScoringState(
     targetSequence,
     currentTargetIndex: targetIndex,
     dartsInCurrentTurn: dartsInTurn,
-    hitsInCurrentTurn: hitsInTurn,
     turns,
     totalScore,
     activeParticipantId: participantIds[0]!,

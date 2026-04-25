@@ -6,8 +6,12 @@ export type RtwSessionStats = {
   durationMs: number;
 };
 
-export type RtwScoringSessionStats = RtwSessionStats & {
+export type RtwScoringSessionStats = {
+  targetsHit: number;
+  targetsTotal: number;
+  dartsThrown: number;
   totalScore: number;
+  durationMs: number;
 };
 
 export type CricketSessionStats = {

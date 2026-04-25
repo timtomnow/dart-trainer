@@ -1,21 +1,22 @@
 import type { RtwScoringConfig } from './config';
-import type { GameEvent, ThrowSegment } from '@/domain/types';
+import type { GameEvent } from '@/domain/types';
 
 export type RtwScoringStatus = 'in_progress' | 'completed' | 'forfeited';
 
+export type RtwScoringMultiplier = 'miss' | 'single' | 'double' | 'triple';
+
 export type RtwScoringAction =
-  | { type: 'throw'; participantId: string; segment: ThrowSegment; value: number }
+  | { type: 'throw'; participantId: string; multiplier: RtwScoringMultiplier }
   | { type: 'forfeit'; participantId: string }
   | { type: 'note'; text: string }
   | { type: 'undo' };
 
 export type RtwScoringDart = {
   eventId: string;
-  segment: ThrowSegment;
-  value: number;
+  multiplier: RtwScoringMultiplier;
+  score: number;
   targetIndex: number;
-  isHit: boolean;
-  scored: number;
+  targetValue: number;
 };
 
 export type RtwScoringTurn = {
@@ -29,9 +30,9 @@ export type RtwScoringTurn = {
 
 export type RtwScoringThrowPayload = {
   participantId: string;
-  segment: ThrowSegment;
-  value: number;
+  multiplier: RtwScoringMultiplier;
   targetIndex: number;
+  targetValue: number;
   dartInTurn: number;
 };
 
@@ -44,7 +45,6 @@ export type RtwScoringState = {
   targetSequence: number[];
   currentTargetIndex: number;
   dartsInCurrentTurn: number;
-  hitsInCurrentTurn: number;
   turns: RtwScoringTurn[];
   totalScore: number;
   activeParticipantId: string;
@@ -58,7 +58,6 @@ export type RtwScoringViewModel = {
   currentTargetIndex: number;
   currentTarget: number | null;
   dartsInCurrentTurn: number;
-  hitsInCurrentTurn: number;
   canUndo: boolean;
   activeParticipantId: string;
   winnerParticipantId?: string;
@@ -66,7 +65,6 @@ export type RtwScoringViewModel = {
   totalDarts: number;
   targetsHit: number;
   targetsTotal: number;
-  dartsPerTurn: number;
   totalScore: number;
   currentTurnScore: number;
 };
