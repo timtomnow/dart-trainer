@@ -12,6 +12,7 @@ export type {
   X01DartIndex,
   X01Leg,
   X01LegStats,
+  X01LegSummary,
   X01State,
   X01Status,
   X01ThrowPayload,

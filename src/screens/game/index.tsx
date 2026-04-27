@@ -80,6 +80,7 @@ export function GameScreen() {
         onPlayAgain={handlePlayAgain}
         config={session.gameConfig as X01VCConfig}
         events={events}
+        participantNames={participantNames}
       />
     );
   }

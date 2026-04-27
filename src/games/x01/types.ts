@@ -77,6 +77,12 @@ export type X01LegStats = {
   scoredTotal: number;
 };
 
+export type X01LegSummary = {
+  legIndex: number;
+  winnerParticipantId?: string;
+  dartsToWin: number;
+};
+
 export type X01ViewModel = {
   status: X01Status;
   config: X01Config;
@@ -102,4 +108,6 @@ export type X01ViewModel = {
   legStats: X01LegStats;
   participantIds: string[];
   participantStats?: Record<string, X01LegStats>;
+  participantRemaining: Record<string, number>;
+  legSummaries: X01LegSummary[];
 };

@@ -278,6 +278,27 @@ function view(state: X01State): X01ViewModel {
       ? computeParticipantStats(state.legs, state.participantIds, state.config)
       : undefined;
 
+  const participantRemaining: Record<string, number> = {};
+  for (const pid of state.participantIds) {
+    if (pid === activeId) {
+      participantRemaining[pid] = remaining;
+    } else {
+      participantRemaining[pid] = leg
+        ? leg.remaining[pid] ?? state.config.startScore
+        : state.config.startScore;
+    }
+  }
+
+  const legSummaries = state.legs
+    .filter((l) => l.winnerParticipantId !== undefined)
+    .map((l) => {
+      const winnerId = l.winnerParticipantId!;
+      const dartsToWin = l.turns
+        .filter((t) => t.participantId === winnerId)
+        .reduce((sum, t) => sum + t.darts.length, 0);
+      return { legIndex: l.index, winnerParticipantId: winnerId, dartsToWin };
+    });
+
   return {
     status: state.status,
     config: state.config,
@@ -292,7 +313,9 @@ function view(state: X01State): X01ViewModel {
     winnerParticipantId: state.winnerParticipantId,
     legStats,
     participantIds: state.participantIds,
-    participantStats
+    participantStats,
+    participantRemaining,
+    legSummaries
   };
 }
 

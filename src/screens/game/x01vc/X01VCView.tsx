@@ -17,6 +17,7 @@ type Props = {
   onPlayAgain: () => Promise<void>;
   config: X01VCConfig;
   events: GameEvent[];
+  participantNames?: Record<string, string>;
 };
 
 type LegEndData = {
@@ -25,9 +26,12 @@ type LegEndData = {
   stats: X01LegStats;
 };
 
+import type { X01LegSummary } from '@/games/x01';
+
 type SessionEndData = {
   stats: X01LegStats;
   participantStats?: Record<string, X01LegStats>;
+  legSummaries: X01LegSummary[];
 };
 
 function formatAvg(n: number): string {
@@ -40,7 +44,7 @@ function formatFirstNine(n: number | null): string {
   return n === null ? '—' : n.toFixed(2);
 }
 
-export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, events }: Props) {
+export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, events, participantNames: externalNames }: Props) {
   const navigate = useNavigate();
   const { keypadLayout } = useKeypadLayout();
   const [actionError, setActionError] = useState<string | null>(null);
@@ -53,11 +57,9 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
 
   const computerParticipantId = config.computerParticipantId;
 
-  // Names: human participants look up their profile name via the participantNames
-  // prop if needed, but here we only have two participants — we inject "Computer".
   const participantNames = useMemo<Record<string, string>>(
-    () => ({ [computerParticipantId]: 'Computer' }),
-    [computerParticipantId]
+    () => ({ ...externalNames, [computerParticipantId]: 'Computer' }),
+    [externalNames, computerParticipantId]
   );
 
   // The human participant is whichever entry in participantIds is not the computer.
@@ -76,7 +78,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
     const capturedStats = prevLegStatsRef.current;
 
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
-      setSessionEndData({ stats: capturedStats, participantStats: view.participantStats });
+      setSessionEndData({ stats: capturedStats, participantStats: view.participantStats, legSummaries: view.legSummaries });
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
@@ -128,26 +130,31 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
         </span>
       </div>
 
-      {/* Score header — shows active participant score */}
-      <header className="mt-4 rounded-xl bg-slate-900 p-5 text-slate-100 shadow-md dark:bg-slate-950">
-        <div className="mb-1 text-center text-sm font-medium text-slate-300" data-testid="x01vc-active-player">
-          {isComputerTurn ? `Computer (${difficultyLabel})` : 'You'}
+      {/* Score header — two columns: human left, computer right */}
+      <header className="mt-4 grid grid-cols-2 gap-3">
+        <div className={`rounded-xl p-5 shadow-md ${!isComputerTurn && !isOver ? 'bg-slate-900 text-slate-100 dark:bg-slate-950' : 'bg-slate-700 text-slate-300 dark:bg-slate-800'}`}>
+          <div className="mb-1 text-center text-sm font-medium text-slate-300">You</div>
+          <div className="text-center text-5xl font-bold tabular-nums" data-testid="x01vc-remaining">
+            {view.participantRemaining[humanParticipantId] ?? view.config.startScore}
+          </div>
+          <div className="mt-1 text-center text-xs text-slate-400" data-testid="x01vc-status">
+            {isOver && view.status === 'completed' && 'Match over'}
+            {isOver && view.status === 'forfeited' && 'Forfeited'}
+            {!isOver && !isComputerTurn && (
+              view.config.inRule === 'double' && !view.opened ? 'Double-in required' : 'Your throw'
+            )}
+            {!isOver && isComputerTurn && '\u00a0'}
+          </div>
         </div>
-        <div
-          className="text-center text-5xl font-bold tabular-nums"
-          data-testid="x01vc-remaining"
-        >
-          {view.remaining}
-        </div>
-        <div className="mt-1 text-center text-xs text-slate-400" data-testid="x01vc-status">
-          {isOver && view.status === 'completed' && 'Match over'}
-          {isOver && view.status === 'forfeited' && 'Forfeited'}
-          {!isOver && isComputerTurn && 'Computer is throwing…'}
-          {!isOver && !isComputerTurn && (
-            view.config.inRule === 'double' && !view.opened
-              ? 'Double-in required'
-              : 'Your throw'
-          )}
+        <div className={`rounded-xl p-5 shadow-md ${isComputerTurn && !isOver ? 'bg-slate-900 text-slate-100 dark:bg-slate-950' : 'bg-slate-700 text-slate-300 dark:bg-slate-800'}`}>
+          <div className="mb-1 text-center text-sm font-medium text-slate-300">Computer ({difficultyLabel})</div>
+          <div className="text-center text-5xl font-bold tabular-nums" data-testid="x01vc-computer-remaining">
+            {view.participantRemaining[computerParticipantId] ?? view.config.startScore}
+          </div>
+          <div className="mt-1 text-center text-xs text-slate-400">
+            {!isOver && isComputerTurn && 'Throwing…'}
+            {(isOver || !isComputerTurn) && '\u00a0'}
+          </div>
         </div>
       </header>
 
@@ -256,6 +263,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
           participantIds={view.participantIds}
           participantNames={participantNames}
           participantStats={sessionEndData.participantStats}
+          legSummaries={sessionEndData.legSummaries}
           config={view.config}
           stats={sessionEndData.stats}
           onEndSession={() => navigate('/')}

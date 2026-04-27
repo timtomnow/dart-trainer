@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { X01Config, X01LegStats, X01Status } from '@/games/x01';
+import type { X01Config, X01LegStats, X01LegSummary, X01Status } from '@/games/x01';
 
 type Props = {
   status: X01Status;
@@ -8,6 +8,7 @@ type Props = {
   participantIds?: string[];
   participantNames?: Record<string, string>;
   participantStats?: Record<string, X01LegStats>;
+  legSummaries?: X01LegSummary[];
   config: X01Config;
   stats: X01LegStats;
   onEndSession: () => void;
@@ -30,6 +31,7 @@ export function X01SessionEndModal({
   participantIds,
   participantNames,
   participantStats,
+  legSummaries,
   config,
   stats,
   onEndSession,
@@ -66,6 +68,34 @@ export function X01SessionEndModal({
         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
           {config.startScore} · {won} leg{won !== 1 ? 's' : ''} won
         </p>
+
+        {legSummaries && legSummaries.length > 0 && (
+          <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800/60">
+            <div className="mb-2 font-medium">Leg Details</div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-slate-500">
+                  <th className="pb-1 font-medium">Leg</th>
+                  <th className="pb-1 font-medium">Winner</th>
+                  <th className="pb-1 text-right font-medium">Darts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {legSummaries.map((ls) => (
+                  <tr key={ls.legIndex} className="border-t border-slate-200 dark:border-slate-700">
+                    <td className="py-1 tabular-nums">{ls.legIndex + 1}</td>
+                    <td className="py-1">
+                      {ls.winnerParticipantId
+                        ? (participantNames?.[ls.winnerParticipantId] ?? ls.winnerParticipantId)
+                        : '—'}
+                    </td>
+                    <td className="py-1 text-right tabular-nums font-semibold">{ls.dartsToWin}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {isMulti ? (
           <div className="mt-4 space-y-2">
