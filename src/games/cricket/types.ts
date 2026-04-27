@@ -1,5 +1,6 @@
 import type { CricketConfig } from './config';
 import type { GameEvent, ThrowSegment } from '@/domain/types';
+import type { CricketParticipantStats } from '@/stats/types';
 
 export const CRICKET_TARGETS = [15, 16, 17, 18, 19, 20, 25] as const;
 export type CricketTarget = (typeof CRICKET_TARGETS)[number];
@@ -96,4 +97,5 @@ export type CricketViewModel = {
   } | null;
   canUndo: boolean;
   winnerParticipantId?: string;
+  participantStats?: Record<string, CricketParticipantStats>;
 };

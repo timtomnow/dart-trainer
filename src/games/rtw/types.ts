@@ -30,6 +30,7 @@ export type RtwState = {
   status: RtwStatus;
   inputEventLog: GameEvent[];
   targetSequence: number[];
+  participantTargetIndices: Record<string, number>;
   currentTargetIndex: number;
   dartsInCurrentTurn: number;
   hitsInCurrentTurn: number;
@@ -48,10 +49,12 @@ export type RtwViewModel = {
   hitsInCurrentTurn: number;
   canUndo: boolean;
   activeParticipantId: string;
+  participantIds: string[];
   winnerParticipantId?: string;
   lastTurn: RtwTurn | null;
   totalDarts: number;
   targetsHit: number;
   targetsTotal: number;
   dartsPerTurn: number;
+  participantTargetIndices?: Record<string, number>;
 };

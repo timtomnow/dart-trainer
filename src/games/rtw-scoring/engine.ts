@@ -132,9 +132,12 @@ function reduce(
 }
 
 function view(state: RtwScoringState): RtwScoringViewModel {
-  const totalDarts = state.turns.reduce((s, t) => s + t.darts.length, 0);
-  const targetsHit = state.turns.filter((t: RtwScoringTurn) => t.darts.some((d) => d.score > 0)).length;
-  const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
+  const activeId = state.activeParticipantId;
+  const myTurns = state.turns.filter((t) => t.participantId === activeId);
+  const totalDarts = myTurns.reduce((s, t) => s + t.darts.length, 0);
+  const targetsHit = myTurns.filter((t: RtwScoringTurn) => t.darts.some((d) => d.score > 0)).length;
+  const lastClosedTurn =
+    [...state.turns].reverse().find((t) => t.closed && t.participantId === activeId) ?? null;
   const currentTurnScore =
     state.turns.length > 0 && !state.turns.at(-1)!.closed
       ? state.turns.at(-1)!.turnScore
@@ -148,14 +151,17 @@ function view(state: RtwScoringState): RtwScoringViewModel {
     currentTarget: state.targetSequence[state.currentTargetIndex] ?? null,
     dartsInCurrentTurn: state.dartsInCurrentTurn,
     canUndo: state.inputEventLog.length > 0,
-    activeParticipantId: state.activeParticipantId,
+    activeParticipantId: activeId,
+    participantIds: state.participantIds,
     winnerParticipantId: state.winnerParticipantId,
     lastTurn: lastClosedTurn,
     totalDarts,
     targetsHit,
     targetsTotal: state.targetSequence.length,
     totalScore: state.totalScore,
-    currentTurnScore
+    currentTurnScore,
+    participantScores:
+      state.participantIds.length > 1 ? { ...state.participantScores } : undefined
   };
 }
 

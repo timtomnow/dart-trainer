@@ -15,6 +15,7 @@ type Props = {
   undo: () => Promise<void>;
   forfeit: (participantId: string) => Promise<void>;
   onPlayAgain: () => Promise<void>;
+  participantNames?: Record<string, string>;
 };
 
 type LegEndData = {
@@ -25,6 +26,7 @@ type LegEndData = {
 
 type SessionEndData = {
   stats: X01LegStats;
+  participantStats?: Record<string, X01LegStats>;
 };
 
 function formatAvg(n: number): string {
@@ -39,7 +41,7 @@ function formatFirstNine(n: number | null): string {
   return n === null ? '—' : n.toFixed(2);
 }
 
-export function X01View({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
+export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
   const { keypadLayout } = useKeypadLayout();
   const [actionError, setActionError] = useState<string | null>(null);
@@ -56,7 +58,7 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
     const capturedStats = prevLegStatsRef.current;
 
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
-      setSessionEndData({ stats: capturedStats });
+      setSessionEndData({ stats: capturedStats, participantStats: view.participantStats });
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
@@ -108,7 +110,7 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
       </div>
 
       <div className="mt-4">
-        <X01ScoreHeader view={view} />
+        <X01ScoreHeader view={view} participantNames={participantNames} />
       </div>
 
       <X01TurnStrip view={view} />
@@ -199,6 +201,9 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
           status={view.status}
           legsWon={view.legsWon}
           participantId={view.activeParticipantId}
+          participantIds={view.participantIds}
+          participantNames={participantNames}
+          participantStats={sessionEndData.participantStats}
           config={view.config}
           stats={sessionEndData.stats}
           onEndSession={() => navigate('/')}

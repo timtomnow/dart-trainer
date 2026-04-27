@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CheckoutView } from './checkout/CheckoutView';
 import { CricketView } from './cricket/CricketView';
@@ -12,7 +12,7 @@ import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
 import type { RtwScoringAction, RtwScoringViewModel } from '@/games/rtw-scoring';
 import type { X01Action, X01ViewModel } from '@/games/x01';
-import { useActiveSession, useSessions } from '@/hooks';
+import { useActiveSession, useProfiles, useSessions } from '@/hooks';
 
 export function GameScreen() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -20,6 +20,12 @@ export function GameScreen() {
   const { session, events, view, isReady, error, dispatch, undo, forfeit } =
     useActiveSession<unknown, unknown>(sessionId ?? null);
   const { create } = useSessions();
+  const { profiles } = useProfiles();
+  const participantNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const p of profiles) map[p.id] = p.name;
+    return map;
+  }, [profiles]);
 
   const handlePlayAgain = useCallback(async () => {
     if (!session) return;
@@ -57,6 +63,7 @@ export function GameScreen() {
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
+        participantNames={participantNames}
       />
     );
   }
@@ -69,6 +76,7 @@ export function GameScreen() {
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
+        participantNames={participantNames}
       />
     );
   }
@@ -81,6 +89,7 @@ export function GameScreen() {
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
+        participantNames={participantNames}
       />
     );
   }
@@ -93,6 +102,7 @@ export function GameScreen() {
         undo={undo}
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
+        participantNames={participantNames}
       />
     );
   }

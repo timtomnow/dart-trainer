@@ -21,13 +21,16 @@ export function buildRtwState(
   const alwaysAdv = alwaysAdvances(config.mode);
   const hitsRequired = hitsRequiredToAdvance(config.mode);
 
+  const participantTargetIndices: Record<string, number> = {};
+  for (const p of participantIds) participantTargetIndices[p] = 0;
+
   const turns: RtwTurn[] = [];
-  let targetIndex = 0;
   let dartsInTurn = 0;
   let hitsInTurn = 0;
   let status: RtwStatus = 'in_progress';
   let winnerParticipantId: string | undefined;
   let currentTurn: RtwTurn | null = null;
+  let participantRotation = 0;
 
   for (const ev of events) {
     if (status !== 'in_progress') break;
@@ -40,6 +43,8 @@ export function buildRtwState(
 
     if (ev.type !== 'throw') continue;
 
+    const activeParticipantId = participantIds[participantRotation]!;
+    const targetIndex = participantTargetIndices[activeParticipantId]!;
     const target = targetSequence[targetIndex];
     if (target === undefined) break;
 
@@ -49,7 +54,7 @@ export function buildRtwState(
       // Group A: one dart per event ('Hit once', '1-dart per target')
       if (!currentTurn || currentTurn.closed) {
         currentTurn = {
-          participantId: p.participantId,
+          participantId: activeParticipantId,
           targetIndexAtStart: targetIndex,
           hitsInTurn: 0,
           dartsInTurn: 0,
@@ -66,14 +71,13 @@ export function buildRtwState(
         currentTurn.hitsInTurn++;
       }
 
-      // 'Hit once': advance target immediately on hit; remaining darts go to next target
       if (advOnHit && p.hit) {
         currentTurn.advanced = true;
-        targetIndex++;
-        if (targetIndex >= targetSequence.length) {
+        participantTargetIndices[activeParticipantId]!++;
+        if (participantTargetIndices[activeParticipantId]! >= targetSequence.length) {
           currentTurn.dartsInTurn = dartsInTurn + 1;
           currentTurn.closed = true;
-          winnerParticipantId = p.participantId;
+          winnerParticipantId = activeParticipantId;
           status = 'completed';
           break;
         }
@@ -82,21 +86,23 @@ export function buildRtwState(
       dartsInTurn++;
 
       if (dartsInTurn >= dpt) {
-        if (!advOnHit) {
-          // '1-dart per target': always advances
-          if (alwaysAdv) {
-            currentTurn.advanced = true;
-            targetIndex++;
-            if (targetIndex >= targetSequence.length) {
-              winnerParticipantId = p.participantId;
-              status = 'completed';
-            }
+        if (!advOnHit && alwaysAdv) {
+          currentTurn.advanced = true;
+          participantTargetIndices[activeParticipantId]!++;
+          if (participantTargetIndices[activeParticipantId]! >= targetSequence.length) {
+            winnerParticipantId = activeParticipantId;
+            status = 'completed';
           }
         }
         currentTurn.dartsInTurn = dartsInTurn;
         currentTurn.closed = true;
+
+        if (status !== 'completed') {
+          participantRotation = (participantRotation + 1) % participantIds.length;
+        }
         dartsInTurn = 0;
         hitsInTurn = 0;
+        currentTurn = null;
       }
     } else {
       // Group B: one turn per event ('3 darts per target', '3-darts until hit N')
@@ -104,7 +110,7 @@ export function buildRtwState(
       const advances = alwaysAdv || ht >= hitsRequired;
 
       const turn: RtwTurn = {
-        participantId: p.participantId,
+        participantId: activeParticipantId,
         targetIndexAtStart: targetIndex,
         hitsInTurn: ht,
         dartsInTurn: 3,
@@ -115,19 +121,25 @@ export function buildRtwState(
       currentTurn = turn;
 
       if (advances) {
-        targetIndex++;
-        if (targetIndex >= targetSequence.length) {
-          winnerParticipantId = p.participantId;
+        participantTargetIndices[activeParticipantId]!++;
+        if (participantTargetIndices[activeParticipantId]! >= targetSequence.length) {
+          winnerParticipantId = activeParticipantId;
           status = 'completed';
         }
       }
 
+      if (status !== 'completed') {
+        participantRotation = (participantRotation + 1) % participantIds.length;
+      }
       dartsInTurn = 0;
       hitsInTurn = 0;
     }
 
     if (status === 'completed') break;
   }
+
+  const activeParticipantId = participantIds[participantRotation]!;
+  const currentTargetIndex = participantTargetIndices[activeParticipantId] ?? 0;
 
   return {
     sessionId,
@@ -138,11 +150,12 @@ export function buildRtwState(
       (e) => e.type === 'throw' || e.type === 'forfeit' || e.type === 'note'
     ),
     targetSequence,
-    currentTargetIndex: targetIndex,
+    participantTargetIndices,
+    currentTargetIndex,
     dartsInCurrentTurn: dartsInTurn,
     hitsInCurrentTurn: hitsInTurn,
     turns,
-    activeParticipantId: participantIds[0]!,
+    activeParticipantId,
     winnerParticipantId
   };
 }

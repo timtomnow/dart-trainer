@@ -5,6 +5,9 @@ type Props = {
   status: X01Status;
   legsWon: Record<string, number>;
   participantId: string;
+  participantIds?: string[];
+  participantNames?: Record<string, string>;
+  participantStats?: Record<string, X01LegStats>;
   config: X01Config;
   stats: X01LegStats;
   onEndSession: () => void;
@@ -24,6 +27,9 @@ export function X01SessionEndModal({
   status,
   legsWon,
   participantId,
+  participantIds,
+  participantNames,
+  participantStats,
   config,
   stats,
   onEndSession,
@@ -33,6 +39,7 @@ export function X01SessionEndModal({
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const won = legsWon[participantId] ?? 0;
+  const isMulti = participantIds && participantIds.length > 1 && participantStats;
 
   const handlePlayAgain = async () => {
     setStarting(true);
@@ -60,26 +67,63 @@ export function X01SessionEndModal({
           {config.startScore} · {won} leg{won !== 1 ? 's' : ''} won
         </p>
 
-        <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">3-dart avg</dt>
-            <dd className="font-semibold tabular-nums">{fmt(stats.threeDartAvg)}</dd>
+        {isMulti ? (
+          <div className="mt-4 space-y-2">
+            {participantIds.map((pid) => {
+              const ps = participantStats[pid];
+              const name = participantNames?.[pid] ?? pid;
+              const pWon = legsWon[pid] ?? 0;
+              if (!ps) return null;
+              return (
+                <div key={pid} className="rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800/60">
+                  <div className="mb-1 font-medium">
+                    {name}
+                    <span className="ml-2 text-xs text-slate-500">{pWon} leg{pWon !== 1 ? 's' : ''}</span>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">Avg</dt>
+                      <dd className="font-semibold tabular-nums">{fmt(ps.threeDartAvg)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">First-9</dt>
+                      <dd className="font-semibold tabular-nums">{ps.firstNineAvg === null ? '—' : fmt(ps.firstNineAvg)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">Checkout</dt>
+                      <dd className="font-semibold tabular-nums">{fmtPct(ps.checkoutPct)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">Best finish</dt>
+                      <dd className="font-semibold tabular-nums">{ps.highestFinish || '—'}</dd>
+                    </div>
+                  </dl>
+                </div>
+              );
+            })}
           </div>
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">First-9 avg</dt>
-            <dd className="font-semibold tabular-nums">
-              {stats.firstNineAvg === null ? '—' : fmt(stats.firstNineAvg)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">Checkout %</dt>
-            <dd className="font-semibold tabular-nums">{fmtPct(stats.checkoutPct)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">Highest finish</dt>
-            <dd className="font-semibold tabular-nums">{stats.highestFinish || '—'}</dd>
-          </div>
-        </dl>
+        ) : (
+          <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">3-dart avg</dt>
+              <dd className="font-semibold tabular-nums">{fmt(stats.threeDartAvg)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">First-9 avg</dt>
+              <dd className="font-semibold tabular-nums">
+                {stats.firstNineAvg === null ? '—' : fmt(stats.firstNineAvg)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">Checkout %</dt>
+              <dd className="font-semibold tabular-nums">{fmtPct(stats.checkoutPct)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">Highest finish</dt>
+              <dd className="font-semibold tabular-nums">{stats.highestFinish || '—'}</dd>
+            </div>
+          </dl>
+        )}
 
         {error && (
           <p role="alert" className="mt-3 text-sm text-red-600">

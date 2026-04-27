@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import type { CricketStatus } from '@/games/cricket';
+import type { CricketParticipantStats } from '@/stats/types';
 
 type Props = {
   status: CricketStatus;
   legsWon: Record<string, number>;
   participantId: string;
+  participantIds?: string[];
+  participantNames?: Record<string, string>;
+  participantStats?: Record<string, CricketParticipantStats>;
   marksPerRound: number;
   totalMarks: number;
   onEndSession: () => void;
@@ -16,6 +20,9 @@ export function CricketSessionEndModal({
   status,
   legsWon,
   participantId,
+  participantIds,
+  participantNames,
+  participantStats,
   marksPerRound,
   totalMarks,
   onEndSession,
@@ -25,6 +32,7 @@ export function CricketSessionEndModal({
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const won = legsWon[participantId] ?? 0;
+  const isMulti = participantIds && participantIds.length > 1 && participantStats;
 
   const handlePlayAgain = async () => {
     setStarting(true);
@@ -52,20 +60,49 @@ export function CricketSessionEndModal({
           Cricket · {won} leg{won !== 1 ? 's' : ''} won
         </p>
 
-        <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">Marks per round</dt>
-            <dd className="font-semibold tabular-nums" data-testid="cricket-mpr">
-              {marksPerRound.toFixed(2)}
-            </dd>
+        {isMulti ? (
+          <div className="mt-4 space-y-2">
+            {participantIds.map((pid) => {
+              const ps = participantStats[pid];
+              const name = participantNames?.[pid] ?? pid;
+              const pWon = legsWon[pid] ?? 0;
+              if (!ps) return null;
+              return (
+                <div key={pid} className="rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800/60">
+                  <div className="mb-1 font-medium">
+                    {name}
+                    <span className="ml-2 text-xs text-slate-500">{pWon} leg{pWon !== 1 ? 's' : ''}</span>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">MPR</dt>
+                      <dd className="font-semibold tabular-nums">{ps.marksPerRound.toFixed(2)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-slate-500">Total marks</dt>
+                      <dd className="font-semibold tabular-nums">{ps.totalMarks}</dd>
+                    </div>
+                  </dl>
+                </div>
+              );
+            })}
           </div>
-          <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">Total marks</dt>
-            <dd className="font-semibold tabular-nums" data-testid="cricket-total-marks">
-              {totalMarks}
-            </dd>
-          </div>
-        </dl>
+        ) : (
+          <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">Marks per round</dt>
+              <dd className="font-semibold tabular-nums" data-testid="cricket-mpr">
+                {marksPerRound.toFixed(2)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 dark:text-slate-400">Total marks</dt>
+              <dd className="font-semibold tabular-nums" data-testid="cricket-total-marks">
+                {totalMarks}
+              </dd>
+            </div>
+          </dl>
+        )}
 
         {error && (
           <p role="alert" className="mt-3 text-sm text-red-600">

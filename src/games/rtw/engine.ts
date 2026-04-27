@@ -117,14 +117,15 @@ function reduce(
 }
 
 function view(state: RtwState): RtwViewModel {
-  const totalDarts = state.turns.reduce((s, t) => s + t.dartsInTurn, 0);
-  // In '1-dart per target' the target always advances; only count turns where the player actually hit
+  const activeId = state.activeParticipantId;
+  const myTurns = state.turns.filter((t) => t.participantId === activeId);
+  const totalDarts = myTurns.reduce((s, t) => s + t.dartsInTurn, 0);
   const targetsHit =
     state.config.mode === '1-dart per target'
-      ? state.turns.filter((t) => t.hitsInTurn > 0).length
+      ? myTurns.filter((t) => t.hitsInTurn > 0).length
       : state.currentTargetIndex;
   const dpt = dartsPerTurn(state.config.mode);
-  const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed) ?? null;
+  const lastClosedTurn = [...state.turns].reverse().find((t) => t.closed && t.participantId === activeId) ?? null;
 
   return {
     status: state.status,
@@ -135,13 +136,16 @@ function view(state: RtwState): RtwViewModel {
     dartsInCurrentTurn: state.dartsInCurrentTurn,
     hitsInCurrentTurn: state.hitsInCurrentTurn,
     canUndo: state.inputEventLog.length > 0,
-    activeParticipantId: state.activeParticipantId,
+    activeParticipantId: activeId,
+    participantIds: state.participantIds,
     winnerParticipantId: state.winnerParticipantId,
     lastTurn: lastClosedTurn,
     totalDarts,
     targetsHit,
     targetsTotal: state.targetSequence.length,
-    dartsPerTurn: dpt
+    dartsPerTurn: dpt,
+    participantTargetIndices:
+      state.participantIds.length > 1 ? { ...state.participantTargetIndices } : undefined
   };
 }
 

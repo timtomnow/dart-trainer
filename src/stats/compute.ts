@@ -1,7 +1,8 @@
-import type { X01SessionStats } from './types';
+import type { X01ParticipantStats, X01SessionStats } from './types';
 import type { GameEvent, Session } from '@/domain/types';
 import type { X01Config } from '@/games/x01/config';
 import { buildX01State } from '@/games/x01/replay';
+import type { X01Turn } from '@/games/x01/types';
 
 type SessionShape = Pick<Session, 'id' | 'participants' | 'startedAt'>;
 
@@ -91,6 +92,11 @@ export function computeSessionStats(
     ? new Date(lastEvent.timestamp).getTime() - new Date(session.startedAt).getTime()
     : 0;
 
+  const byParticipant =
+    session.participants.length > 1
+      ? computeX01ByParticipant(state.legs.flatMap((l) => l.turns), session.participants, config)
+      : undefined;
+
   return {
     threeDartAvg,
     firstNineAvg,
@@ -108,6 +114,72 @@ export function computeSessionStats(
     highestCheckout,
     shortestLeg,
     busts,
-    durationMs
+    durationMs,
+    byParticipant
   };
+}
+
+function computeX01ByParticipant(
+  allTurns: X01Turn[],
+  participantIds: string[],
+  config: X01Config
+): Record<string, X01ParticipantStats> {
+  const result: Record<string, X01ParticipantStats> = {};
+  for (const pid of participantIds) {
+    const turns = allTurns.filter((t) => t.participantId === pid && t.closed);
+    let pDarts = 0;
+    let pScored = 0;
+    let pFirst9Scored = 0;
+    let pFirst9Darts = 0;
+    let pCheckoutOpps = 0;
+    let pCheckoutHits = 0;
+    let pHighestTurn = 0;
+    let pHighestCheckout = 0;
+    let p180 = 0;
+    let pBusts = 0;
+
+    for (const turn of turns) {
+      pDarts += turn.darts.length;
+      if (turn.bust) {
+        pBusts++;
+      } else {
+        pScored += turn.scored;
+        if (turn.scored > pHighestTurn) pHighestTurn = turn.scored;
+        if (turn.scored === 180) p180++;
+      }
+      if (turn.startRemaining <= 170) {
+        pCheckoutOpps++;
+        if (turn.checkout) pCheckoutHits++;
+      }
+      if (turn.checkout && turn.startRemaining > pHighestCheckout) {
+        pHighestCheckout = turn.startRemaining;
+      }
+      if (pFirst9Darts < 9) {
+        const take = Math.min(turn.darts.length, 9 - pFirst9Darts);
+        pFirst9Darts += take;
+        if (take === turn.darts.length) {
+          pFirst9Scored += turn.scored;
+        } else {
+          for (let i = 0; i < take; i++) pFirst9Scored += turn.darts[i]!.scored;
+        }
+      }
+    }
+
+    const pAvg = pDarts > 0 ? (pScored / pDarts) * 3 : 0;
+    const pF9 = pFirst9Darts >= 9 ? pFirst9Scored / 3 : null;
+    const pCo = pCheckoutOpps > 0 ? pCheckoutHits / pCheckoutOpps : null;
+    void config;
+
+    result[pid] = {
+      threeDartAvg: pAvg,
+      firstNineAvg: pF9,
+      checkoutPct: pCo,
+      dartsThrown: pDarts,
+      count180: p180,
+      highestTurnScore: pHighestTurn,
+      highestCheckout: pHighestCheckout,
+      busts: pBusts
+    };
+  }
+  return result;
 }

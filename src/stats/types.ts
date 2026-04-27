@@ -4,6 +4,7 @@ export type RtwSessionStats = {
   dartsThrown: number;
   hitRatePct: number | null;
   durationMs: number;
+  byParticipant?: Record<string, RtwParticipantStats>;
 };
 
 export type RtwScoringSessionStats = {
@@ -12,6 +13,7 @@ export type RtwScoringSessionStats = {
   dartsThrown: number;
   totalScore: number;
   durationMs: number;
+  byParticipant?: Record<string, RtwScoringParticipantStats>;
 };
 
 export type CricketSessionStats = {
@@ -20,6 +22,7 @@ export type CricketSessionStats = {
   dartsThrown: number;
   totalScored: number;
   durationMs: number;
+  byParticipant?: Record<string, CricketParticipantStats>;
 };
 
 export type CheckoutPerFinishStats = {
@@ -41,6 +44,17 @@ export type CheckoutSessionStats = {
   durationMs: number;
 };
 
+export type X01ParticipantStats = {
+  threeDartAvg: number;
+  firstNineAvg: number | null;
+  checkoutPct: number | null;
+  dartsThrown: number;
+  count180: number;
+  highestTurnScore: number;
+  highestCheckout: number;
+  busts: number;
+};
+
 export type X01SessionStats = {
   threeDartAvg: number;
   firstNineAvg: number | null;
@@ -59,4 +73,23 @@ export type X01SessionStats = {
   shortestLeg: number | null;
   busts: number;
   durationMs: number;
+  byParticipant?: Record<string, X01ParticipantStats>;
+};
+
+export type CricketParticipantStats = {
+  marksPerRound: number;
+  totalMarks: number;
+  totalScored: number;
+  dartsThrown: number;
+};
+
+export type RtwParticipantStats = {
+  targetsHit: number;
+  dartsThrown: number;
+};
+
+export type RtwScoringParticipantStats = {
+  totalScore: number;
+  targetsHit: number;
+  dartsThrown: number;
 };

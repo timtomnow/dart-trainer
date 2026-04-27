@@ -37,7 +37,7 @@ import {
   type X01OutRule,
   type X01StartScore
 } from '@/games/x01';
-import { useKeypadLayout, useProfile, useSessions } from '@/hooks';
+import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
 
 // Common checkout finishes grouped by range
 const HIGH_FINISHES = [170, 167, 164, 161, 160, 158, 157, 130, 127, 120, 110, 100];
@@ -95,7 +95,26 @@ const SELECT_CLS =
 export function PlayScreen() {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { profiles } = useProfiles();
   const { sessions, create, discard } = useSessions({ status: 'in_progress' });
+  const [extraParticipants, setExtraParticipants] = useState<string[]>([]);
+
+  const otherProfiles = useMemo(
+    () => profiles.filter((p) => !p.archived && p.id !== profile?.id),
+    [profiles, profile]
+  );
+
+  const selectedParticipants = useMemo(
+    () => (profile ? [profile.id, ...extraParticipants] : extraParticipants),
+    [profile, extraParticipants]
+  );
+
+  const toggleParticipant = (id: string) => {
+    setExtraParticipants((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
   const [x01Config, setX01Config] = useState<X01Config>(X01_DEFAULT_CONFIG);
   const [cricketConfig, setCricketConfig] = useState<CricketConfig>(CRICKET_DEFAULT_CONFIG);
   const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
@@ -153,6 +172,8 @@ export function PlayScreen() {
     }
   };
 
+  const SOLO_ONLY = new Set([CHECKOUT_GAME_ID, 'freeform']);
+
   const startSession = async (
     gameModeId: string,
     gameConfig: X01Config | CricketConfig | RtwConfig | RtwScoringConfig | CheckoutConfig
@@ -161,11 +182,12 @@ export function PlayScreen() {
     setStarting(true);
     setError(null);
     try {
-      const session = await create({
-        gameModeId,
-        gameConfig,
-        participants: [profile.id]
-      });
+      const participants = SOLO_ONLY.has(gameModeId)
+        ? [profile.id]
+        : selectedParticipants.length > 0
+          ? selectedParticipants
+          : [profile.id];
+      const session = await create({ gameModeId, gameConfig, participants });
       navigate(`/game/${session.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -213,7 +235,42 @@ export function PlayScreen() {
     <section className="mx-auto max-w-xl">
       <h1 className="text-2xl font-semibold">Play</h1>
 
-      <div className="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+      {otherProfiles.length > 0 && (
+        <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Players</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            Select additional players for X01, Cricket, and RTW games.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {profile && (
+              <span className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">
+                {profile.name} (you)
+              </span>
+            )}
+            {otherProfiles.map((p) => {
+              const selected = extraParticipants.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => toggleParticipant(p.id)}
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                    selected
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950 dark:text-blue-300'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                  }`}
+                  data-testid={`player-toggle-${p.id}`}
+                  aria-pressed={selected}
+                >
+                  {p.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
         <h2 className="text-lg font-semibold">X01</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           301 / 501 / 701 with double-in and double/masters/straight out rules.

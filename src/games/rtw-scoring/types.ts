@@ -46,6 +46,7 @@ export type RtwScoringState = {
   currentTargetIndex: number;
   dartsInCurrentTurn: number;
   turns: RtwScoringTurn[];
+  participantScores: Record<string, number>;
   totalScore: number;
   activeParticipantId: string;
   winnerParticipantId?: string;
@@ -60,6 +61,7 @@ export type RtwScoringViewModel = {
   dartsInCurrentTurn: number;
   canUndo: boolean;
   activeParticipantId: string;
+  participantIds: string[];
   winnerParticipantId?: string;
   lastTurn: RtwScoringTurn | null;
   totalDarts: number;
@@ -67,4 +69,5 @@ export type RtwScoringViewModel = {
   targetsTotal: number;
   totalScore: number;
   currentTurnScore: number;
+  participantScores?: Record<string, number>;
 };

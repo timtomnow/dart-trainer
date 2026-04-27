@@ -4,8 +4,11 @@ import { buildX01State } from './replay';
 import type {
   X01Action,
   X01DartIndex,
+  X01Leg,
+  X01LegStats,
   X01State,
   X01ThrowPayload,
+  X01Turn,
   X01ViewModel
 } from './types';
 import { isInputEventType } from '@/domain/events';
@@ -18,6 +21,59 @@ import type {
 } from '@/games/engine';
 import { isValidDart } from '@/games/engine/common';
 import { computeX01LegStats } from '@/stats/x01Inline';
+
+function isCheckoutOpp(remaining: number, outRule: X01Config['outRule']): boolean {
+  if (remaining <= 0 || remaining > 170) return false;
+  if (outRule === 'straight') return true;
+  return remaining !== 1;
+}
+
+function computeStatsForParticipant(
+  turns: X01Turn[],
+  outRule: X01Config['outRule']
+): X01LegStats {
+  if (turns.length === 0) {
+    return { threeDartAvg: 0, firstNineAvg: null, checkoutPct: null, highestFinish: 0, dartsThrown: 0, scoredTotal: 0 };
+  }
+  let darts = 0, scored = 0, f9Darts = 0, f9Scored = 0;
+  let checkoutOpps = 0, checkouts = 0, highestFinish = 0;
+  for (const turn of turns) {
+    darts += turn.darts.length;
+    scored += turn.scored;
+    if (f9Darts < 9) {
+      const take = Math.min(turn.darts.length, 9 - f9Darts);
+      f9Darts += take;
+      if (take === turn.darts.length) f9Scored += turn.scored;
+      else for (let i = 0; i < take; i++) f9Scored += turn.darts[i]!.scored;
+    }
+    if (isCheckoutOpp(turn.startRemaining, outRule)) {
+      checkoutOpps++;
+      if (turn.checkout) checkouts++;
+    }
+    if (turn.checkout && turn.startRemaining > highestFinish) highestFinish = turn.startRemaining;
+  }
+  return {
+    threeDartAvg: darts > 0 ? (scored / darts) * 3 : 0,
+    firstNineAvg: f9Darts >= 9 ? (f9Scored / 9) * 3 : null,
+    checkoutPct: checkoutOpps > 0 ? (checkouts / checkoutOpps) * 100 : null,
+    highestFinish,
+    dartsThrown: darts,
+    scoredTotal: scored
+  };
+}
+
+function computeParticipantStats(
+  legs: X01Leg[],
+  participantIds: string[],
+  config: X01Config
+): Record<string, X01LegStats> {
+  const allTurns = legs.flatMap((l) => l.turns).filter((t) => t.closed);
+  const result: Record<string, X01LegStats> = {};
+  for (const pid of participantIds) {
+    result[pid] = computeStatsForParticipant(allTurns.filter((t) => t.participantId === pid), config.outRule);
+  }
+  return result;
+}
 
 function initialState(
   config: X01Config,
@@ -217,6 +273,11 @@ function view(state: X01State): X01ViewModel {
 
   const legStats = computeX01LegStats(activeLegForStats, activeId, state.config);
 
+  const participantStats =
+    sessionEnded && state.participantIds.length > 1
+      ? computeParticipantStats(state.legs, state.participantIds, state.config)
+      : undefined;
+
   return {
     status: state.status,
     config: state.config,
@@ -229,7 +290,9 @@ function view(state: X01State): X01ViewModel {
     lastClosedTurn,
     canUndo: state.inputEventLog.length > 0,
     winnerParticipantId: state.winnerParticipantId,
-    legStats
+    legStats,
+    participantIds: state.participantIds,
+    participantStats
   };
 }
 

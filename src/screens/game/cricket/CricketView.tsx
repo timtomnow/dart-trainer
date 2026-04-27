@@ -6,6 +6,7 @@ import { CricketSessionEndModal } from './CricketSessionEndModal';
 import type { ThrowSegment } from '@/domain/types';
 import { CRICKET_TARGETS } from '@/games/cricket';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
+import type { CricketParticipantStats } from '@/stats/types';
 
 type Props = {
   view: CricketViewModel;
@@ -13,30 +14,26 @@ type Props = {
   undo: () => Promise<void>;
   forfeit: (participantId: string) => Promise<void>;
   onPlayAgain: () => Promise<void>;
+  participantNames?: Record<string, string>;
 };
 
 type SessionEndData = {
   marksPerRound: number;
   totalMarks: number;
+  participantStats?: Record<string, CricketParticipantStats>;
 };
 
 function computeLiveStats(view: CricketViewModel): { marksPerRound: number; totalMarks: number } {
-  const leg = view;
-  // Tally all closed turns across the current view's marks/turns
-  // We don't have direct turn access from ViewModel, so derive from current turn only
-  // For the end modal we use a simple accumulation via the view's last-closed-turn chain
-  // A minimal approximation: use marks on the board as proxy for total marks
   let total = 0;
   for (const pid of view.participantIds) {
     for (const [, m] of Object.entries(view.marks[pid] ?? {})) {
       total += Math.min(m, 3) as number;
     }
   }
-  void leg;
   return { marksPerRound: 0, totalMarks: total };
 }
 
-export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
+export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
@@ -47,7 +44,7 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
     const prevStatus = prevStatusRef.current;
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
       const stats = computeLiveStats(view);
-      setSessionEndData(stats);
+      setSessionEndData({ ...stats, participantStats: view.participantStats });
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
@@ -156,6 +153,9 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain }: Prop
           status={view.status}
           legsWon={view.legsWon}
           participantId={view.activeParticipantId}
+          participantIds={view.participantIds}
+          participantNames={participantNames}
+          participantStats={sessionEndData.participantStats}
           marksPerRound={sessionEndData.marksPerRound}
           totalMarks={sessionEndData.totalMarks}
           onEndSession={() => navigate('/')}

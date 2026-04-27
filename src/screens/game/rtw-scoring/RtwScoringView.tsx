@@ -9,6 +9,7 @@ type Props = {
   undo: () => Promise<void>;
   forfeit: (participantId: string) => Promise<void>;
   onPlayAgain: () => Promise<void>;
+  participantNames?: Record<string, string>;
 };
 
 function DartDots({ filled, total }: { filled: number; total: number }) {
@@ -28,7 +29,7 @@ function DartDots({ filled, total }: { filled: number; total: number }) {
   );
 }
 
-export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
+export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
@@ -58,6 +59,10 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
     );
 
   const isOver = view.status !== 'in_progress';
+  const isMulti = view.participantIds.length > 1;
+  const activeName = isMulti
+    ? (participantNames?.[view.activeParticipantId] ?? view.activeParticipantId)
+    : null;
 
   return (
     <section className="mx-auto max-w-xl pb-6">
@@ -68,8 +73,14 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
         </span>
       </div>
 
+      {activeName && !isOver && (
+        <div className="mt-3 text-center text-sm font-medium text-slate-600 dark:text-slate-300" data-testid="rtws-active-player">
+          {activeName}
+        </div>
+      )}
+
       {/* Current target */}
-      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
+      <div className="mt-2 rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
           {isOver ? (view.status === 'completed' ? 'Completed' : 'Forfeited') : 'Target'}
         </p>
@@ -157,20 +168,36 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain }: P
           <h2 className="text-lg font-semibold">
             {view.status === 'completed' ? 'RTW Scoring complete!' : 'Session ended'}
           </h2>
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <dt className="text-xs text-slate-500">Points</dt>
-              <dd className="text-2xl font-bold text-emerald-600" data-testid="rtws-end-points">{view.totalScore}</dd>
+          {isMulti && view.participantScores ? (
+            <div className="mt-3 space-y-2">
+              {view.participantIds.map((pid) => {
+                const score = view.participantScores![pid] ?? 0;
+                const name = participantNames?.[pid] ?? pid;
+                const isWinner = pid === view.winnerParticipantId;
+                return (
+                  <div key={pid} className={`flex items-center justify-between rounded-lg p-2 text-sm ${isWinner ? 'bg-blue-50 dark:bg-blue-950' : 'bg-slate-50 dark:bg-slate-800/60'}`}>
+                    <span className="font-medium">{name}{isWinner ? ' (winner)' : ''}</span>
+                    <span className="font-bold tabular-nums text-emerald-600">{score} pts</span>
+                  </div>
+                );
+              })}
             </div>
-            <div>
-              <dt className="text-xs text-slate-500">Targets hit</dt>
-              <dd className="font-semibold">{view.targetsHit}/{view.targetsTotal}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-slate-500">Total darts</dt>
-              <dd className="font-semibold">{view.totalDarts}</dd>
-            </div>
-          </dl>
+          ) : (
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <dt className="text-xs text-slate-500">Points</dt>
+                <dd className="text-2xl font-bold text-emerald-600" data-testid="rtws-end-points">{view.totalScore}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Targets hit</dt>
+                <dd className="font-semibold">{view.targetsHit}/{view.targetsTotal}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Total darts</dt>
+                <dd className="font-semibold">{view.totalDarts}</dd>
+              </div>
+            </dl>
+          )}
           <div className="mt-4 flex gap-2">
             <button
               type="button"

@@ -7,6 +7,7 @@ import type {
   CricketLeg,
   CricketState,
   CricketThrowPayload,
+  CricketTurn,
   CricketViewModel
 } from './types';
 import { CRICKET_TARGETS } from './types';
@@ -15,6 +16,7 @@ import { CURRENT_SCHEMA_VERSION } from '@/domain/schemas/common';
 import type { GameEvent, GameEventType } from '@/domain/types';
 import type { EngineReduceResult, EngineSeeds, GameEngine } from '@/games/engine';
 import { isValidDart } from '@/games/engine/common';
+import type { CricketParticipantStats } from '@/stats/types';
 
 function error(
   state: CricketState,
@@ -166,6 +168,22 @@ function legScore(leg: CricketLeg | undefined, participantIds: string[]) {
   return leg ? leg.score : emptyScore(participantIds);
 }
 
+function computeCricketParticipantStats(
+  turns: CricketTurn[],
+  participantIds: string[]
+): Record<string, CricketParticipantStats> {
+  const result: Record<string, CricketParticipantStats> = {};
+  for (const pid of participantIds) {
+    const pt = turns.filter((t) => t.participantId === pid);
+    const totalMarks = pt.reduce((s, t) => s + t.marked, 0);
+    const totalScored = pt.reduce((s, t) => s + t.scored, 0);
+    const dartsThrown = pt.reduce((s, t) => s + t.darts.length, 0);
+    const marksPerRound = pt.length > 0 ? totalMarks / pt.length : 0;
+    result[pid] = { marksPerRound, totalMarks, totalScored, dartsThrown };
+  }
+  return result;
+}
+
 function view(state: CricketState): CricketViewModel {
   const leg = state.legs.at(-1);
   const activeId = state.activeParticipantId;
@@ -197,6 +215,15 @@ function view(state: CricketState): CricketViewModel {
       }
     : null;
 
+  const sessionEnded = state.status !== 'in_progress';
+  const participantStats =
+    sessionEnded && state.participantIds.length > 1
+      ? computeCricketParticipantStats(
+          state.legs.flatMap((l) => l.turns).filter((t) => t.closed),
+          state.participantIds
+        )
+      : undefined;
+
   return {
     status: state.status,
     config: state.config,
@@ -209,7 +236,8 @@ function view(state: CricketState): CricketViewModel {
     currentTurn,
     lastClosedTurn,
     canUndo: state.inputEventLog.length > 0,
-    winnerParticipantId: state.winnerParticipantId
+    winnerParticipantId: state.winnerParticipantId,
+    participantStats
   };
 }
 
