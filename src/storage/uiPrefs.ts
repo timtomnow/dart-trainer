@@ -9,6 +9,8 @@ export type UiPrefs = {
   haptics?: boolean;
   sound?: boolean;
   keypadLayout?: KeypadLayout;
+  lastQuotaHint?: string;
+  quotaHintDismissedAt?: string;
 };
 
 export const UI_PREFS_EVENT = 'dt-ui-prefs-change';

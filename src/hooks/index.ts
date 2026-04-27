@@ -12,6 +12,7 @@ export { useSessionDetail, type UseSessionDetailResult } from './useSessionDetai
 export { useStats, type UseStatsResult, type AggregateStats, type TrendPoint } from './useStats';
 export { useKeypadLayout, type UseKeypadLayoutResult } from './useKeypadLayout';
 export { useUiPrefs, type UseUiPrefsResult, type UiFeedbackPrefs } from './useUiPrefs';
+export { useQuotaHint, checkQuotaAndMaybeFlag } from './useQuotaHint';
 export {
   useCheckoutStats,
   type UseCheckoutStatsResult,

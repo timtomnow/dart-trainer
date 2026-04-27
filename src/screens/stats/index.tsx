@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useCricketStats } from '@/hooks/useCricketStats';
 import { useRtwStats } from '@/hooks/useRtwStats';
@@ -133,6 +134,15 @@ export function StatsScreen() {
   const { loading: cricketLoading, aggregate: cricketAggregate } = useCricketStats(profileId);
   const { loading: rtwLoading, rtwGroups, rtwScoringGroups } = useRtwStats(profileId);
 
+  const noStats =
+    !loading &&
+    !cricketLoading &&
+    !rtwLoading &&
+    !aggregate &&
+    !cricketAggregate &&
+    rtwGroups.length === 0 &&
+    rtwScoringGroups.length === 0;
+
   return (
     <section className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">Stats</h1>
@@ -147,10 +157,21 @@ export function StatsScreen() {
         <p className="text-slate-500 dark:text-slate-400">Loading…</p>
       )}
 
-      {profileId && !loading && !aggregate && (
-        <p className="text-slate-500 dark:text-slate-400">
-          No completed X01 sessions yet. Play a game to see your stats.
-        </p>
+      {profileId && noStats && (
+        <div
+          data-testid="stats-empty"
+          className="rounded-md border border-dashed border-slate-300 p-6 text-center dark:border-slate-700"
+        >
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            No stats yet. Play a session.
+          </p>
+          <Link
+            to="/play"
+            className="mt-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            Play a session
+          </Link>
+        </div>
       )}
 
       {aggregate && (

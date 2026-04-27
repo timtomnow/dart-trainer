@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { checkQuotaAndMaybeFlag } from './useQuotaHint';
 import { useStorage } from '@/app/providers/StorageProvider';
 import { newId as defaultNewId } from '@/domain/ids';
 import type { GameEvent, Session, SessionStatus } from '@/domain/types';
@@ -113,6 +114,9 @@ export function useActiveSession<TViewModel = unknown, TAction = unknown>(
       const targetStatus: SessionStatus = derivedStatus;
       if (session.status !== targetStatus) {
         await adapter.updateSessionStatus(session.id, targetStatus);
+        if (targetStatus === 'completed') {
+          void checkQuotaAndMaybeFlag();
+        }
       }
       await reload(session.id);
     },

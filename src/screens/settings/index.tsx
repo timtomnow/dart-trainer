@@ -1,6 +1,8 @@
 import { AboutSection } from './AboutSection';
 import { DataSection } from './DataSection';
+import { InstallSection } from './InstallSection';
 import { ProfilesSection } from './ProfilesSection';
+import { QuotaHint } from './QuotaHint';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
 import { useUiPrefs } from '@/hooks';
 import { ToggleRow } from '@/ui/primitives';
@@ -14,6 +16,8 @@ export function SettingsScreen() {
   return (
     <section className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-semibold">Settings</h1>
+
+      <QuotaHint />
 
       <div className="mt-6">
         <h2 className="text-sm font-medium text-slate-700 dark:text-slate-300">Theme</h2>
@@ -71,6 +75,8 @@ export function SettingsScreen() {
       <ProfilesSection />
 
       <DataSection />
+
+      <InstallSection />
 
       <AboutSection />
     </section>
