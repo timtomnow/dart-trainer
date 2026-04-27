@@ -2,13 +2,13 @@
 
 **Shipping name:** TTN Darts Trainer. **Repo:** `dart-trainer`.
 
-This is a local-first darts training PWA. The full plan is in [APP-PLAN.md](APP-PLAN.md). Read it before making structural changes. This file is the short version of the rules that matter while coding.
+This is a local-first darts training PWA. This file is the rules that matter while coding. User-facing context lives in [README.md](README.md).
 
 ## Product principles (do not violate)
 - **No accounts, no cloud database, no telemetry.** Data lives on the device.
 - **Manual export/import is the only recovery path.** There is no sync.
 - **Offline-first.** Core features must work with no network.
-- **No backup nagging.** The app does not prompt for backups on launch, on session end, or on a schedule. Users own that decision. See §5 of the plan.
+- **No backup nagging.** The app does not prompt for backups on launch, on session end, or on a schedule. The app proactively mentions backup in exactly two cases: a real storage problem (near-quota or DB open failure), or immediately before a destructive action the user has initiated (e.g., import-replace).
 - **Desktop ≈ mobile.** Same product, responsive layout. No desktop-only admin screens.
 
 ## Architecture boundaries (hard rules)
@@ -30,14 +30,15 @@ These boundaries are enforced by ESLint `no-restricted-paths`. If you need to cr
 - No `Date.now()`, `Math.random()`, `fetch`, `indexedDB`, or React imports inside `src/games/**`.
 - If an engine needs time or randomness, take them as injected functions: `now: () => string`, `rng: () => number`.
 - Engines return `{ state, events, error? }`. They never mutate inputs.
-- One game = one folder under `src/games/<id>/` implementing `GameEngine`. Do not build a meta-framework for games.
+- One game = one folder under `src/games/<id>/` implementing `GameEngine`. Current folders: `x01`, `x01vc`, `cricket`, `rtw`, `rtw-scoring`, `checkout`, `freeform`, `drill`, plus `engine/` (interface + shared helpers) and `ai/` (pure `aiThrow` function). Do not build a meta-framework for games.
+- AI difficulty is a 1–10 integer scale (1 = beginner, 10 = expert). Tuning lives in `src/games/ai/`. AI seats are participants on a session, not profiles — never add an AI to the profiles store.
 
 ## Events are the source of truth
 - The append-only `GameEvent` log per session is authoritative.
 - `Leg`, `Turn`, `Throw` records are derived caches. Never update them directly — regenerate them by replaying events.
 - **Undo** = pop the last *input event* (`throw`, `forfeit`, `note`). Derived events (`turn_end`, `leg_end`, `session_end`) are re-synthesized by replay. Undo may cross turn and leg boundaries, all the way back to the first event.
 - **Forfeit** is a first-class input event. It emits a `forfeit` event; replay sets session status to `forfeited`. Undoing a forfeit returns the session to `in_progress`.
-- **Corrections** (v1+) are append-only: a `correction` event references the original event id. Never rewrite history.
+- **Corrections** are append-only: a `correction` event references the original event id. Never rewrite history.
 
 ## Stats are derived, not incremented
 - `src/stats/` owns every stat. Screens consume `StatsSummary` objects; they do not compute stats inline.
@@ -54,7 +55,7 @@ These boundaries are enforced by ESLint `no-restricted-paths`. If you need to cr
 
 ## Storage rules
 - All user content goes through `StorageAdapter` (Dexie implementation under the hood).
-- `localStorage` is for tiny UI prefs only (theme, haptics toggle). Never user or session content.
+- `localStorage` is for tiny UI prefs only (theme, haptics toggle, sound toggle, keypad layout, last-viewed tab). Never user, profile, or session content.
 - Request `navigator.storage.persist()` once on first successful launch. Do not re-prompt.
 - Handle `QuotaExceededError` gracefully. One dismissible inline hint at >85% quota. Never block play.
 
@@ -62,13 +63,13 @@ These boundaries are enforced by ESLint `no-restricted-paths`. If you need to cr
 - Soft cap ~250 lines per file; hard review at 400. Split before it gets worse.
 - If `ActiveGame` or any screen starts accumulating rule logic, stop and push it into the game engine.
 - Do not create `utils.ts` grab bags. Name files by what they own.
-- Do not leave `// TODO` comments without a tracking note in APP-PLAN.md or a milestone.
+- Do not leave `// TODO` comments without an issue tracking it.
 
 ## Tests that matter
 - Every game engine: `init`, `reduce` for every legal action, a property test that `replay(events)` equals live `reduce` accumulation.
 - Every schema change: a fixture import test for each prior version.
 - Every stat: deterministic fixture test against hand-computed values.
-- AI opponents (M11+): seeded RNG produces deterministic output.
+- AI opponents: seeded RNG produces deterministic output.
 
 ## What not to do
 - Do not add centralized sync, accounts, email, or analytics. Explicitly out of scope.
