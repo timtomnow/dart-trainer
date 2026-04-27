@@ -5,10 +5,12 @@ import { freeformEngine } from './freeform';
 import { rtwEngine } from './rtw';
 import { rtwScoringEngine } from './rtw-scoring';
 import { x01Engine } from './x01';
+import { x01vcEngine } from './x01vc';
 
 export const GAME_REGISTRY = {
   freeform: freeformEngine,
   x01: x01Engine,
+  x01vc: x01vcEngine,
   cricket: cricketEngine,
   rtw: rtwEngine,
   'rtw-scoring': rtwScoringEngine,

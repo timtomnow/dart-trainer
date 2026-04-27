@@ -6,12 +6,14 @@ import { FreeformView } from './freeform/FreeformView';
 import { RtwView } from './rtw/RtwView';
 import { RtwScoringView } from './rtw-scoring/RtwScoringView';
 import { X01View } from './x01/X01View';
+import { X01VCView } from './x01vc/X01VCView';
 import type { CheckoutAction, CheckoutViewModel } from '@/games/checkout';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
 import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
 import type { RtwScoringAction, RtwScoringViewModel } from '@/games/rtw-scoring';
 import type { X01Action, X01ViewModel } from '@/games/x01';
+import type { X01VCConfig } from '@/games/x01vc';
 import { useActiveSession, useProfiles, useSessions } from '@/hooks';
 
 export function GameScreen() {
@@ -64,6 +66,20 @@ export function GameScreen() {
         forfeit={forfeit}
         onPlayAgain={handlePlayAgain}
         participantNames={participantNames}
+      />
+    );
+  }
+
+  if (session.gameModeId === 'x01vc') {
+    return (
+      <X01VCView
+        view={view as X01ViewModel}
+        dispatch={dispatch as (a: X01Action) => Promise<void>}
+        undo={undo}
+        forfeit={forfeit}
+        onPlayAgain={handlePlayAgain}
+        config={session.gameConfig as X01VCConfig}
+        events={events}
       />
     );
   }

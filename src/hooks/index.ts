@@ -16,3 +16,4 @@ export {
   type UseCheckoutStatsResult,
   type CheckoutAggStats
 } from './useCheckoutStats';
+export { useX01VCAutoPlay } from './useX01VCAutoPlay';

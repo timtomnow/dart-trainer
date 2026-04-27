@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { newId } from '@/domain/ids';
 import type { Session } from '@/domain/types';
 import {
   CHECKOUT_DEFAULT_CONFIG,
@@ -37,6 +38,12 @@ import {
   type X01OutRule,
   type X01StartScore
 } from '@/games/x01';
+import {
+  X01VC_DEFAULT_CONFIG,
+  X01VC_GAME_ID,
+  type WhoGoesFirst,
+  type X01VCConfig
+} from '@/games/x01vc';
 import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
 
 // Common checkout finishes grouped by range
@@ -116,6 +123,7 @@ export function PlayScreen() {
   };
 
   const [x01Config, setX01Config] = useState<X01Config>(X01_DEFAULT_CONFIG);
+  const [x01vcBaseConfig, setX01vcBaseConfig] = useState<Omit<X01VCConfig, 'computerParticipantId' | 'computerSeed'>>(X01VC_DEFAULT_CONFIG);
   const [cricketConfig, setCricketConfig] = useState<CricketConfig>(CRICKET_DEFAULT_CONFIG);
   const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
   const [rtwScoringConfig, setRtwScoringConfig] = useState<RtwScoringConfig>(RTW_SCORING_DEFAULT_CONFIG);
@@ -156,6 +164,13 @@ export function PlayScreen() {
     if (!profile) return null;
     return sessions.find(
       (s) => s.gameModeId === CHECKOUT_GAME_ID && s.participants.includes(profile.id)
+    ) ?? null;
+  }, [sessions, profile]);
+
+  const resumableX01VC = useMemo(() => {
+    if (!profile) return null;
+    return sessions.find(
+      (s) => s.gameModeId === X01VC_GAME_ID && s.participants.includes(profile.id)
     ) ?? null;
   }, [sessions, profile]);
 
@@ -220,6 +235,33 @@ export function PlayScreen() {
       const next = has ? c.finishes.filter((f) => f !== n) : [...c.finishes, n].sort((a, b) => b - a);
       return { ...c, finishes: next.length > 0 ? next : c.finishes };
     });
+  };
+
+  const startX01VC = async () => {
+    if (!profile) return;
+    setStarting(true);
+    setError(null);
+    try {
+      const computerParticipantId = newId();
+      const computerSeed = Date.now();
+      const cfg: X01VCConfig = { ...x01vcBaseConfig, computerParticipantId, computerSeed };
+
+      // Participant order determines who starts leg 0 (engine alternates per leg).
+      // 'user' / 'alternate' → human first; 'computer' → computer first; 'random' → coin flip.
+      const whoFirst = x01vcBaseConfig.whoGoesFirst;
+      const computerGoesFirst =
+        whoFirst === 'computer' ||
+        (whoFirst === 'random' && Math.random() < 0.5);
+      const participants = computerGoesFirst
+        ? [computerParticipantId, profile.id]
+        : [profile.id, computerParticipantId];
+
+      const session = await create({ gameModeId: X01VC_GAME_ID, gameConfig: cfg, participants });
+      navigate(`/game/${session.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setStarting(false);
+    }
   };
 
   const startRtwScoring = async () => {
@@ -383,6 +425,145 @@ export function PlayScreen() {
           <p role="alert" className="mt-2 text-sm text-red-600">
             {error}
           </p>
+        )}
+      </div>
+
+      {/* X01 vs Computer */}
+      <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <h2 className="text-lg font-semibold">X01 vs Computer</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Play X01 against a computer opponent. Choose a difficulty from 1 (easiest) to 10 (hardest).
+        </p>
+
+        {resumableX01VC ? (
+          <div className="mt-4">
+            <ResumeCard
+              session={resumableX01VC}
+              label="X01 vs Computer"
+              onResume={() => navigate(`/game/${resumableX01VC.id}`)}
+              onStartNew={() => void discardExisting(resumableX01VC)}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Start score</span>
+                <select
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.startScore}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({ ...c, startScore: Number(e.target.value) as X01StartScore }))
+                  }
+                  data-testid="x01vc-start-score"
+                >
+                  <option value={301}>301</option>
+                  <option value={501}>501</option>
+                  <option value={701}>701</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Legs to win</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={9}
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.legsToWin}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({
+                      ...c,
+                      legsToWin: Math.max(1, Math.min(9, Number(e.target.value) || 1))
+                    }))
+                  }
+                  data-testid="x01vc-legs-to-win"
+                />
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">In rule</span>
+                <select
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.inRule}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({ ...c, inRule: e.target.value as X01InRule }))
+                  }
+                  data-testid="x01vc-in-rule"
+                >
+                  <option value="straight">Straight in</option>
+                  <option value="double">Double in</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Out rule</span>
+                <select
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.outRule}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({ ...c, outRule: e.target.value as X01OutRule }))
+                  }
+                  data-testid="x01vc-out-rule"
+                >
+                  <option value="straight">Straight out</option>
+                  <option value="double">Double out</option>
+                  <option value="masters">Masters out</option>
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Difficulty</span>
+                <select
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.computerDifficulty}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({ ...c, computerDifficulty: Number(e.target.value) }))
+                  }
+                  data-testid="x01vc-difficulty"
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n} — {
+                        n <= 2 ? 'Beginner' :
+                        n <= 4 ? 'Easy' :
+                        n <= 6 ? 'Medium' :
+                        n <= 8 ? 'Hard' :
+                        'Expert'
+                      }
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Who goes first</span>
+                <select
+                  className={SELECT_CLS}
+                  value={x01vcBaseConfig.whoGoesFirst}
+                  onChange={(e) =>
+                    setX01vcBaseConfig((c) => ({ ...c, whoGoesFirst: e.target.value as WhoGoesFirst }))
+                  }
+                  data-testid="x01vc-who-goes-first"
+                >
+                  <option value="user">You (every leg)</option>
+                  <option value="computer">Computer (every leg)</option>
+                  <option value="alternate">Alternate (you start)</option>
+                  <option value="random">Random</option>
+                </select>
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void startX01VC()}
+              disabled={!profile || starting}
+              className="mt-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="x01vc-start"
+            >
+              {starting ? 'Starting…' : 'Start vs Computer'}
+            </button>
+          </>
         )}
       </div>
 
