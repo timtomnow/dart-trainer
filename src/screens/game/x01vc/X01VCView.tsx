@@ -7,7 +7,8 @@ import { X01TurnStrip } from '../x01/X01TurnStrip';
 import type { ThrowSegment, GameEvent } from '@/domain/types';
 import type { X01Action, X01LegStats, X01ViewModel, X01LegSummary } from '@/games/x01';
 import type { X01VCConfig } from '@/games/x01vc';
-import { useKeypadLayout, useX01VCAutoPlay } from '@/hooks';
+import { useKeypadLayout, useUiPrefs, useX01VCAutoPlay } from '@/hooks';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -46,6 +47,7 @@ function formatFirstNine(n: number | null): string {
 export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, events, participantNames: externalNames }: Props) {
   const navigate = useNavigate();
   const { keypadLayout } = useKeypadLayout();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [legEndData, setLegEndData] = useState<LegEndData | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
@@ -126,6 +128,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-semibold">X01 vs Computer</h1>
           <RulesHelpButton gameId="x01vc" />
+          <InGameSettings />
         </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="x01vc-legs">
           Leg {view.legIndex + 1} · Won {humanWon}/{view.config.legsToWin}
@@ -175,7 +178,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
           </p>
         </div>
       ) : (
-        <X01Keypad onDart={onDart} disabled={isOver || isComputerTurn} layout={keypadLayout} />
+        <X01Keypad onDart={onDart} disabled={isOver || isComputerTurn} layout={keypadLayout} prefs={uiPrefs} />
       )}
 
       <dl

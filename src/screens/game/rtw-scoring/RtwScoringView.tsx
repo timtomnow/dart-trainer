@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwScoringKeypad } from './RtwScoringKeypad';
 import type { RtwScoringAction, RtwScoringMultiplier, RtwScoringViewModel } from '@/games/rtw-scoring';
+import { useUiPrefs } from '@/hooks';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -32,6 +34,7 @@ function DartDots({ filled, total }: { filled: number; total: number }) {
 
 export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
 
@@ -71,6 +74,7 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-semibold">RTW Scoring</h1>
           <RulesHelpButton gameId="rtw-scoring" />
+          <InGameSettings />
         </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="rtws-progress">
           {view.currentTargetIndex}/{view.targetsTotal}
@@ -128,6 +132,7 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
         onThrow={onThrow}
         disabled={isOver}
         currentTarget={view.currentTarget}
+        prefs={uiPrefs}
       />
 
       {!sessionDone && (

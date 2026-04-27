@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameEvent, Session, ThrowSegment } from '@/domain/types';
 import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
+import { useUiPrefs } from '@/hooks';
+import { dartFeedback } from '@/lib/feedback';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 
 const QUICK_THROWS: Array<{ label: string; segment: ThrowSegment; value: number }> = [
   { label: 'Miss', segment: 'MISS', value: 0 },
@@ -24,6 +27,7 @@ type Props = {
 
 export function FreeformView({ session, events, view, dispatch, undo, forfeit }: Props) {
   const navigate = useNavigate();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
 
   const participantId = session.participants[0]!;
@@ -38,13 +42,18 @@ export function FreeformView({ session, events, view, dispatch, undo, forfeit }:
     }
   };
 
-  const runThrow = (segment: ThrowSegment, value: number) =>
-    run(() => dispatch({ type: 'throw', participantId, segment, value, dartIndex }));
+  const runThrow = (segment: ThrowSegment, value: number) => {
+    dartFeedback(uiPrefs);
+    return run(() => dispatch({ type: 'throw', participantId, segment, value, dartIndex }));
+  };
 
   return (
     <section className="mx-auto max-w-3xl">
       <header className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">Active Game</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold">Active Game</h1>
+          <InGameSettings />
+        </div>
         <span className="text-sm text-slate-500 dark:text-slate-400">{session.gameModeId}</span>
       </header>
 

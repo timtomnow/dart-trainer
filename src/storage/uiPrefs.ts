@@ -7,8 +7,11 @@ export type { KeypadLayout };
 export type UiPrefs = {
   theme?: 'light' | 'dark' | 'system';
   haptics?: boolean;
+  sound?: boolean;
   keypadLayout?: KeypadLayout;
 };
+
+export const UI_PREFS_EVENT = 'dt-ui-prefs-change';
 
 export function readUiPrefs(): UiPrefs {
   if (typeof window === 'undefined') return {};
@@ -29,5 +32,10 @@ export function writeUiPrefs(patch: Partial<UiPrefs>): void {
     window.localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     /* localStorage may be blocked (private mode / quota); UI prefs are non-essential. */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent(UI_PREFS_EVENT, { detail: next }));
+  } catch {
+    /* CustomEvent may not be available in some environments. */
   }
 }

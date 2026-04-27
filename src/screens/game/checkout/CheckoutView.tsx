@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { CheckoutKeypad } from './CheckoutKeypad';
 import type { ThrowSegment } from '@/domain/types';
 import type { CheckoutAction, CheckoutAttempt, CheckoutViewModel } from '@/games/checkout';
+import { useUiPrefs } from '@/hooks';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -66,6 +68,7 @@ function AttemptRow({ attempt }: { attempt: CheckoutAttempt }) {
 
 export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Props) {
   const navigate = useNavigate();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
 
@@ -105,6 +108,7 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-semibold">Checkout Practice</h1>
           <RulesHelpButton gameId="checkout" />
+          <InGameSettings />
         </div>
         <span
           className="text-sm text-slate-500 dark:text-slate-400"
@@ -198,6 +202,7 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
           disabled={isOver}
           remainingInAttempt={view.remainingInCurrentAttempt}
           outRule={view.config.outRule}
+          prefs={uiPrefs}
         />
       )}
 

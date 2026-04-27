@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { ThrowSegment } from '@/domain/types';
+import type { UiFeedbackPrefs } from '@/hooks';
+import { dartFeedback } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Multiplier = 'S' | 'D' | 'T';
@@ -7,27 +9,35 @@ type Multiplier = 'S' | 'D' | 'T';
 type Props = {
   onDart: (segment: ThrowSegment, value: number) => void;
   disabled: boolean;
+  prefs?: UiFeedbackPrefs;
 };
 
 const CRICKET_NUMBERS = [15, 16, 17, 18, 19, 20] as const;
 
-export function CricketKeypad({ onDart, disabled }: Props) {
+export function CricketKeypad({ onDart, disabled, prefs }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>('S');
+
+  const fireFeedback = () => {
+    if (prefs) dartFeedback(prefs);
+  };
 
   const pickNumber = (face: number) => {
     const value = face * (multiplier === 'S' ? 1 : multiplier === 'D' ? 2 : 3);
+    fireFeedback();
     onDart(multiplier, value);
     setMultiplier('S');
   };
 
   const pickBull = () => {
     // Triple bull doesn't exist; treat T as double for bull
+    fireFeedback();
     if (multiplier === 'D' || multiplier === 'T') onDart('DB', 50);
     else onDart('SB', 25);
     setMultiplier('S');
   };
 
   const pickMiss = () => {
+    fireFeedback();
     onDart('MISS', 0);
     setMultiplier('S');
   };

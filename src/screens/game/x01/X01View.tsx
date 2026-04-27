@@ -7,7 +7,7 @@ import { X01SessionEndModal } from './X01SessionEndModal';
 import { X01TurnStrip } from './X01TurnStrip';
 import type { ThrowSegment } from '@/domain/types';
 import type { X01Action, X01LegStats, X01ViewModel } from '@/games/x01';
-import { useKeypadLayout } from '@/hooks';
+import { useKeypadLayout, useUiPrefs } from '@/hooks';
 
 type Props = {
   view: X01ViewModel;
@@ -44,6 +44,7 @@ function formatFirstNine(n: number | null): string {
 export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
   const { keypadLayout } = useKeypadLayout();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [legEndData, setLegEndData] = useState<LegEndData | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
@@ -115,7 +116,7 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
 
       <X01TurnStrip view={view} />
 
-      <X01Keypad onDart={onDart} disabled={isOver} layout={keypadLayout} />
+      <X01Keypad onDart={onDart} disabled={isOver} layout={keypadLayout} prefs={uiPrefs} />
 
       <dl
         className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60 sm:grid-cols-4"

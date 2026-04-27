@@ -1,5 +1,6 @@
 import type { ThrowSegment } from '@/domain/types';
 import type { CricketTarget } from '@/games/cricket';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type DartEntry = {
@@ -56,8 +57,9 @@ export function CricketScoreboard({ marks, participantIds, activeParticipantId, 
       className="relative mt-4 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
       data-testid="cricket-scoreboard"
     >
-      <div className="absolute right-2 top-2 z-10">
+      <div className="absolute right-2 top-2 z-10 flex gap-2">
         <RulesHelpButton gameId="cricket" />
+        <InGameSettings />
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-200 text-sm dark:divide-slate-700">
         <div>{LEFT_TARGETS.map(cell)}</div>

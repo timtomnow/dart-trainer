@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwKeypad } from './RtwKeypad';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
+import { useUiPrefs } from '@/hooks';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -32,6 +34,7 @@ function DartDots({ filled, total }: { filled: number; total: number }) {
 
 export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
 
@@ -87,6 +90,7 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participan
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-semibold">Round the World</h1>
           <RulesHelpButton gameId="rtw" />
+          <InGameSettings />
         </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="rtw-progress">
           {view.currentTargetIndex}/{view.targetsTotal}
@@ -162,6 +166,7 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participan
         onGroupA={onGroupA}
         onGroupB={onGroupB}
         disabled={isOver}
+        prefs={uiPrefs}
       />
 
       {!sessionDone && (

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { KeypadLayout, ThrowSegment } from '@/domain/types';
+import type { UiFeedbackPrefs } from '@/hooks';
+import { dartFeedback } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Multiplier = 'S' | 'D' | 'T';
@@ -8,6 +10,7 @@ type Props = {
   onDart: (segment: ThrowSegment, value: number) => void;
   disabled: boolean;
   layout?: KeypadLayout;
+  prefs?: UiFeedbackPrefs;
 };
 
 const NUMBERS = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -23,22 +26,29 @@ const OUTER_BTN = 15;
 const INNER_BTN = 13;
 const BULL_BTN = 11;
 
-export function X01Keypad({ onDart, disabled, layout = 'sequential' }: Props) {
+export function X01Keypad({ onDart, disabled, layout = 'sequential', prefs }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>('S');
+
+  const fireFeedback = () => {
+    if (prefs) dartFeedback(prefs);
+  };
 
   const pickNumber = (face: number) => {
     const value = face * (multiplier === 'S' ? 1 : multiplier === 'D' ? 2 : 3);
+    fireFeedback();
     onDart(multiplier, value);
     setMultiplier('S');
   };
 
   const pickBull = () => {
+    fireFeedback();
     if (multiplier === 'D') onDart('DB', 50);
     else onDart('SB', 25);
     setMultiplier('S');
   };
 
   const pickMiss = () => {
+    fireFeedback();
     onDart('MISS', 0);
     setMultiplier('S');
   };

@@ -6,6 +6,7 @@ import { CricketSessionEndModal } from './CricketSessionEndModal';
 import type { ThrowSegment } from '@/domain/types';
 import { CRICKET_TARGETS } from '@/games/cricket';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
+import { useUiPrefs } from '@/hooks';
 import type { CricketParticipantStats } from '@/stats/types';
 
 type Props = {
@@ -35,6 +36,7 @@ function computeLiveStats(view: CricketViewModel): { marksPerRound: number; tota
 
 export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, participantNames }: Props) {
   const navigate = useNavigate();
+  const uiPrefs = useUiPrefs();
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
 
@@ -91,7 +93,7 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
         currentTurnDarts={view.currentTurn.darts}
       />
 
-      <CricketKeypad onDart={onDart} disabled={isOver} />
+      <CricketKeypad onDart={onDart} disabled={isOver} prefs={uiPrefs} />
 
       <dl
         className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60"
