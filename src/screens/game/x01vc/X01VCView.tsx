@@ -5,7 +5,7 @@ import { X01LegEndModal } from '../x01/X01LegEndModal';
 import { X01SessionEndModal } from '../x01/X01SessionEndModal';
 import { X01TurnStrip } from '../x01/X01TurnStrip';
 import type { ThrowSegment, GameEvent } from '@/domain/types';
-import type { X01Action, X01LegStats, X01ViewModel } from '@/games/x01';
+import type { X01Action, X01LegStats, X01ViewModel, X01LegSummary } from '@/games/x01';
 import type { X01VCConfig } from '@/games/x01vc';
 import { useKeypadLayout, useX01VCAutoPlay } from '@/hooks';
 
@@ -25,8 +25,6 @@ type LegEndData = {
   legsWon: Record<string, number>;
   stats: X01LegStats;
 };
-
-import type { X01LegSummary } from '@/games/x01';
 
 type SessionEndData = {
   stats: X01LegStats;
