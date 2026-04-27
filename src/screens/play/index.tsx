@@ -45,6 +45,7 @@ import {
   type X01VCConfig
 } from '@/games/x01vc';
 import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 // Common checkout finishes grouped by range
 const HIGH_FINISHES = [170, 167, 164, 161, 160, 158, 157, 130, 127, 120, 110, 100];
@@ -313,7 +314,10 @@ export function PlayScreen() {
       )}
 
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">X01</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">X01</h2>
+          <RulesHelpButton gameId={X01_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           301 / 501 / 701 with double-in and double/masters/straight out rules.
         </p>
@@ -430,7 +434,10 @@ export function PlayScreen() {
 
       {/* X01 vs Computer */}
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">X01 vs Computer</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">X01 vs Computer</h2>
+          <RulesHelpButton gameId={X01VC_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Play X01 against a computer opponent. Choose a difficulty from 1 (easiest) to 10 (hardest).
         </p>
@@ -568,7 +575,10 @@ export function PlayScreen() {
       </div>
 
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">Cricket</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">Cricket</h2>
+          <RulesHelpButton gameId={CRICKET_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           15–20 and bull. Close numbers and outscore your opponents.
         </p>
@@ -619,7 +629,10 @@ export function PlayScreen() {
 
       {/* ── Round the World ───────────────────────────────────────────────── */}
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">Round the World</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">Round the World</h2>
+          <RulesHelpButton gameId={RTW_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Work through targets in sequence. Hit each to advance.
         </p>
@@ -721,7 +734,10 @@ export function PlayScreen() {
 
       {/* ── RTW Scoring ───────────────────────────────────────────────────── */}
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">RTW Scoring</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">RTW Scoring</h2>
+          <RulesHelpButton gameId={RTW_SCORING_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Round the World — 21 targets (1–20 + Bull). 3 darts per target, scored by throw quality: Miss=0, Single=1, Double=2, Triple=3 points.
         </p>
@@ -774,7 +790,10 @@ export function PlayScreen() {
       </div>
       {/* ── Checkout Practice ─────────────────────────────────────────────── */}
       <div className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-        <h2 className="text-lg font-semibold">Checkout Practice</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold">Checkout Practice</h2>
+          <RulesHelpButton gameId={CHECKOUT_GAME_ID} />
+        </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Practice finishing darts. Select finishes, set attempts, and track your hit rate.
         </p>

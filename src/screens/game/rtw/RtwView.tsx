@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwKeypad } from './RtwKeypad';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: RtwViewModel;
@@ -83,7 +84,10 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participan
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">Round the World</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold">Round the World</h1>
+          <RulesHelpButton gameId="rtw" />
+        </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="rtw-progress">
           {view.currentTargetIndex}/{view.targetsTotal}
         </span>

@@ -8,6 +8,7 @@ import type { ThrowSegment, GameEvent } from '@/domain/types';
 import type { X01Action, X01LegStats, X01ViewModel, X01LegSummary } from '@/games/x01';
 import type { X01VCConfig } from '@/games/x01vc';
 import { useKeypadLayout, useX01VCAutoPlay } from '@/hooks';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: X01ViewModel;
@@ -122,7 +123,10 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">X01 vs Computer</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold">X01 vs Computer</h1>
+          <RulesHelpButton gameId="x01vc" />
+        </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="x01vc-legs">
           Leg {view.legIndex + 1} · Won {humanWon}/{view.config.legsToWin}
         </span>

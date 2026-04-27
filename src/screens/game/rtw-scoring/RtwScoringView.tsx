@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RtwScoringKeypad } from './RtwScoringKeypad';
 import type { RtwScoringAction, RtwScoringMultiplier, RtwScoringViewModel } from '@/games/rtw-scoring';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: RtwScoringViewModel;
@@ -67,7 +68,10 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">RTW Scoring</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold">RTW Scoring</h1>
+          <RulesHelpButton gameId="rtw-scoring" />
+        </div>
         <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="rtws-progress">
           {view.currentTargetIndex}/{view.targetsTotal}
         </span>

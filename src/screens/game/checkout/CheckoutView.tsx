@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckoutKeypad } from './CheckoutKeypad';
 import type { ThrowSegment } from '@/domain/types';
 import type { CheckoutAction, CheckoutAttempt, CheckoutViewModel } from '@/games/checkout';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: CheckoutViewModel;
@@ -101,7 +102,10 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">Checkout Practice</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold">Checkout Practice</h1>
+          <RulesHelpButton gameId="checkout" />
+        </div>
         <span
           className="text-sm text-slate-500 dark:text-slate-400"
           data-testid="checkout-progress"
