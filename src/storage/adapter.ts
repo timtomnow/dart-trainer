@@ -55,6 +55,7 @@ export interface StorageAdapter {
   putDerivedStats(stats: DerivedStats): Promise<void>;
 
   replaceAllData(data: BackupData): Promise<void>;
+  deleteAllData(): Promise<void>;
 
   subscribeAppSettings(cb: (settings: AppSettings | null) => void): Unsubscribe;
   subscribeProfiles(

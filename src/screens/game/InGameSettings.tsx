@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
-import { useUiPrefs } from '@/hooks';
+import { useUiPrefs, useBackup } from '@/hooks';
 import { Modal, ToggleRow } from '@/ui/primitives';
 
 const THEMES: ReadonlyArray<Theme> = ['light', 'dark', 'system'];
@@ -12,9 +12,26 @@ type Props = {
 
 export function InGameSettings({ className = '' }: Props) {
   const [open, setOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { sound, haptics, setSound, setHaptics } = useUiPrefs();
+  const { deleteAllData } = useBackup();
+
+  async function handleDeleteAll() {
+    setDeleting(true);
+    try {
+      await deleteAllData();
+      setDeleteConfirm(false);
+      setOpen(false);
+    } catch (err) {
+      setDeleteErr(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const goToFullSettings = () => {
     setOpen(false);
@@ -90,7 +107,7 @@ export function InGameSettings({ className = '' }: Props) {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+          <div className="border-t border-slate-200 pt-3 dark:border-slate-700 flex items-center justify-between">
             <button
               type="button"
               onClick={goToFullSettings}
@@ -98,9 +115,68 @@ export function InGameSettings({ className = '' }: Props) {
             >
               Full Settings &rarr;
             </button>
+            <button
+              type="button"
+              onClick={() => setDeleteConfirm(true)}
+              className="text-sm font-medium text-red-600 hover:underline dark:text-red-400"
+            >
+              Delete all data
+            </button>
           </div>
+
+          {deleteErr && (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              Delete failed: {deleteErr}.{' '}
+              <button type="button" onClick={() => setDeleteErr(null)} className="underline">
+                Dismiss
+              </button>
+            </p>
+          )}
         </div>
       </Modal>
+
+      {deleteConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-delete-ingame-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
+            <h3
+              id="confirm-delete-ingame-title"
+              className="text-base font-semibold text-slate-900 dark:text-white"
+            >
+              Delete all data?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              This will permanently delete all <strong>sessions, game history, and profiles</strong>{' '}
+              stored on this device.
+            </p>
+            <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-400">
+              This cannot be undone. Export a backup first if you want to keep your data.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => void handleDeleteAll()}
+                disabled={deleting}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete all data'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -17,10 +17,13 @@ type Status =
   | { kind: 'import-pending'; pending: PendingImport }
   | { kind: 'importing' }
   | { kind: 'import-ok'; counts: ImportResult }
-  | { kind: 'import-err'; message: string };
+  | { kind: 'import-err'; message: string }
+  | { kind: 'delete-confirm' }
+  | { kind: 'deleting' }
+  | { kind: 'delete-err'; message: string };
 
 export function DataSection() {
-  const { exportBackup, validateBackupFile, applyManifest } = useBackup();
+  const { exportBackup, validateBackupFile, applyManifest, deleteAllData } = useBackup();
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,11 +69,26 @@ export function DataSection() {
     }
   }
 
+  async function handleDeleteAll() {
+    if (status.kind !== 'delete-confirm') return;
+    setStatus({ kind: 'deleting' });
+    try {
+      await deleteAllData();
+      setStatus({ kind: 'idle' });
+    } catch (err) {
+      setStatus({ kind: 'delete-err', message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
   function dismiss() {
     setStatus({ kind: 'idle' });
   }
 
-  const busy = status.kind === 'exporting' || status.kind === 'validating' || status.kind === 'importing';
+  const busy =
+    status.kind === 'exporting' ||
+    status.kind === 'validating' ||
+    status.kind === 'importing' ||
+    status.kind === 'deleting';
 
   return (
     <div className="mt-8">
@@ -102,6 +120,15 @@ export function DataSection() {
             onChange={(e) => void handleFileChange(e)}
           />
         </label>
+
+        <button
+          type="button"
+          onClick={() => setStatus({ kind: 'delete-confirm' })}
+          disabled={busy}
+          className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950"
+        >
+          {status.kind === 'deleting' ? 'Deleting…' : 'Delete all data'}
+        </button>
       </div>
 
       {status.kind === 'export-ok' && (
@@ -131,6 +158,56 @@ export function DataSection() {
             Dismiss
           </button>
         </p>
+      )}
+
+      {status.kind === 'delete-err' && (
+        <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
+          Delete failed: {status.message}.{' '}
+          <button type="button" onClick={dismiss} className="underline">
+            Dismiss
+          </button>
+        </p>
+      )}
+
+      {status.kind === 'delete-confirm' && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-delete-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
+            <h3
+              id="confirm-delete-title"
+              className="text-base font-semibold text-slate-900 dark:text-white"
+            >
+              Delete all data?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              This will permanently delete all <strong>sessions, game history, and profiles</strong>{' '}
+              stored on this device.
+            </p>
+            <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-400">
+              This cannot be undone. Export a backup first if you want to keep your data.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => void handleDeleteAll()}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete all data
+              </button>
+              <button
+                type="button"
+                onClick={dismiss}
+                className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {status.kind === 'import-pending' && (

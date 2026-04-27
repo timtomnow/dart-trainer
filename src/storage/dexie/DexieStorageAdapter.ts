@@ -339,6 +339,27 @@ export class DexieStorageAdapter implements StorageAdapter {
     await this.emitActiveProfile(settings?.activeProfileId ?? null);
   }
 
+  async deleteAllData(): Promise<void> {
+    await this.db.transaction(
+      'rw',
+      [this.db.appSettings, this.db.profiles, this.db.sessions, this.db.events, this.db.derivedStats],
+      async () => {
+        await this.db.profiles.clear();
+        await this.db.sessions.clear();
+        await this.db.events.clear();
+        await this.db.derivedStats.clear();
+        const existing = await this.db.appSettings.toCollection().first();
+        if (existing?.activeProfileId) {
+          await this.db.appSettings.put({ ...existing, activeProfileId: null });
+        }
+      }
+    );
+    const settings = await this.getAppSettings();
+    await this.emitAppSettings(settings);
+    await this.emitProfiles();
+    await this.emitActiveProfile(null);
+  }
+
   subscribeAppSettings(cb: AppSettingsListener): Unsubscribe {
     this.appSettingsListeners.add(cb);
     void this.getAppSettings().then((s) => cb(s));

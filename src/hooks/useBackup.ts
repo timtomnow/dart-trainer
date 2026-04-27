@@ -16,6 +16,7 @@ export function useBackup() {
       validateBackupFile(file),
     applyManifest: (manifest: BackupManifest): Promise<ImportResult> =>
       applyManifest(manifest, adapter),
-    importBackup: (file: File): Promise<ImportResult> => importBackup(file, adapter)
+    importBackup: (file: File): Promise<ImportResult> => importBackup(file, adapter),
+    deleteAllData: (): Promise<void> => adapter.deleteAllData()
   };
 }

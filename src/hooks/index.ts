@@ -19,3 +19,4 @@ export {
   type CheckoutAggStats
 } from './useCheckoutStats';
 export { useX01VCAutoPlay } from './useX01VCAutoPlay';
+export { useBackup } from './useBackup';
