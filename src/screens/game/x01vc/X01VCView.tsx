@@ -200,9 +200,9 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Highest finish</dt>
-          <dd className="font-semibold tabular-nums" data-testid="x01vc-highest-finish">
-            {view.legStats.highestFinish || '—'}
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Darts thrown</dt>
+          <dd className="font-semibold tabular-nums" data-testid="x01vc-darts-thrown">
+            {view.legStats.dartsThrown}
           </dd>
         </div>
       </dl>

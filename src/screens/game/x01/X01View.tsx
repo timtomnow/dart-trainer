@@ -143,9 +143,9 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Highest finish</dt>
-          <dd className="font-semibold tabular-nums" data-testid="x01-highest-finish">
-            {view.legStats.highestFinish || '—'}
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Darts thrown</dt>
+          <dd className="font-semibold tabular-nums" data-testid="x01-darts-thrown">
+            {view.legStats.dartsThrown}
           </dd>
         </div>
       </dl>

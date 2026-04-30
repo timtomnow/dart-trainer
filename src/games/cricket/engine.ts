@@ -224,6 +224,12 @@ function view(state: CricketState): CricketViewModel {
         )
       : undefined;
 
+  const allActiveTurns = state.legs.flatMap((l) => l.turns).filter((t) => t.participantId === activeId);
+  const closedActiveTurns = allActiveTurns.filter((t) => t.closed);
+  const dartsThrown = allActiveTurns.reduce((s, t) => s + t.darts.length, 0);
+  const totalMarks = closedActiveTurns.reduce((s, t) => s + t.marked, 0);
+  const avgMarksPerTurn = closedActiveTurns.length > 0 ? totalMarks / closedActiveTurns.length : null;
+
   return {
     status: state.status,
     config: state.config,
@@ -235,6 +241,8 @@ function view(state: CricketState): CricketViewModel {
     score: legScore(leg, state.participantIds),
     currentTurn,
     lastClosedTurn,
+    dartsThrown,
+    avgMarksPerTurn,
     canUndo: state.inputEventLog.length > 0,
     winnerParticipantId: state.winnerParticipantId,
     participantStats

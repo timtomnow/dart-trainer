@@ -95,6 +95,8 @@ export type CricketViewModel = {
     marked: number;
     scored: number;
   } | null;
+  dartsThrown: number;
+  avgMarksPerTurn: number | null;
   canUndo: boolean;
   winnerParticipantId?: string;
   participantStats?: Record<string, CricketParticipantStats>;

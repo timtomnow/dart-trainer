@@ -98,7 +98,7 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
       <CricketKeypad onDart={onDart} disabled={isOver} prefs={uiPrefs} />
 
       <dl
-        className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60"
+        className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60 sm:grid-cols-4"
         data-testid="cricket-turn-stats"
       >
         <div>
@@ -111,6 +111,18 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
           <dt className="text-xs text-slate-500 dark:text-slate-400">Marks remaining</dt>
           <dd className="font-semibold tabular-nums" data-testid="cricket-marks-remaining">
             {marksRemaining}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Darts thrown</dt>
+          <dd className="font-semibold tabular-nums" data-testid="cricket-darts-thrown">
+            {view.dartsThrown}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Avg marks/turn</dt>
+          <dd className="font-semibold tabular-nums" data-testid="cricket-avg-marks">
+            {view.avgMarksPerTurn !== null ? view.avgMarksPerTurn.toFixed(2) : '—'}
           </dd>
         </div>
       </dl>
