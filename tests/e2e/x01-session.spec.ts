@@ -40,7 +40,7 @@ test('x01 301 leg: score, bust, and checkout on D20', async ({ page }) => {
   await expect(page.getByTestId('x01-status')).toHaveText('Match won');
   await expect(page.getByTestId('x01-remaining')).toHaveText('0');
   await expect(page.getByTestId('x01-legs')).toContainText('Won 1/1');
-  await expect(page.getByTestId('x01-highest-finish')).toHaveText('121');
+  await expect(page.getByTestId('x01-darts-thrown')).toHaveText('8');
 
   // Undo the checkout dart: status returns to in_progress with 40 remaining.
   await page.getByTestId('x01-undo').click();
