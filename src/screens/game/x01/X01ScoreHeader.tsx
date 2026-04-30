@@ -1,6 +1,4 @@
 import type { X01ViewModel } from '@/games/x01';
-import { InGameSettings } from '@/screens/game/InGameSettings';
-import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: X01ViewModel;
@@ -15,11 +13,7 @@ export function X01ScoreHeader({ view, participantNames }: Props) {
     : null;
 
   return (
-    <header className="relative rounded-xl bg-slate-900 p-5 text-slate-100 shadow-md dark:bg-slate-950">
-      <div className="absolute right-3 top-3 flex gap-2">
-        <RulesHelpButton gameId="x01" />
-        <InGameSettings />
-      </div>
+    <header className="rounded-xl bg-slate-900 p-5 text-slate-100 shadow-md dark:bg-slate-950">
       {activeName && (
         <div className="mb-1 text-center text-sm font-medium text-slate-300" data-testid="x01-active-player">
           {activeName}

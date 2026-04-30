@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ThrowSegment } from '@/domain/types';
 import type { CheckoutOutRule } from '@/games/checkout';
 import type { UiFeedbackPrefs } from '@/hooks';
-import { dartFeedback } from '@/lib/feedback';
+import { dartFeedback, vibrateTap } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Multiplier = 'S' | 'D' | 'T';
@@ -62,7 +62,7 @@ export function CheckoutKeypad({ onDart, disabled, remainingInAttempt, outRule, 
             variant={multiplier === m ? 'multiplier-active' : 'multiplier'}
             role="radio"
             aria-checked={multiplier === m}
-            onClick={() => setMultiplier(m)}
+            onClick={() => { vibrateTap(prefs?.haptics ?? false); setMultiplier(m); }}
             disabled={disabled}
             data-testid={`checkout-mult-${m}`}
           >

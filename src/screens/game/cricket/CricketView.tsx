@@ -7,7 +7,9 @@ import type { ThrowSegment } from '@/domain/types';
 import { CRICKET_TARGETS } from '@/games/cricket';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
 import { useUiPrefs } from '@/hooks';
+import { InGameSettings } from '@/screens/game/InGameSettings';
 import type { CricketParticipantStats } from '@/stats/types';
+import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
   view: CricketViewModel;
@@ -114,7 +116,7 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
       </dl>
 
       {!sessionEndData && (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex items-center gap-2">
           <button
             type="button"
             onClick={() => run(() => undo())}
@@ -133,14 +135,18 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
           >
             Forfeit
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="ml-auto rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            data-testid="cricket-quit"
-          >
-            Quit
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <RulesHelpButton gameId="cricket" />
+            <InGameSettings />
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              data-testid="cricket-quit"
+            >
+              Quit
+            </button>
+          </div>
         </div>
       )}
 

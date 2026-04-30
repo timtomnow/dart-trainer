@@ -105,11 +105,7 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
   return (
     <section className="mx-auto max-w-xl pb-6">
       <div className="flex items-baseline justify-between">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-2xl font-semibold">Checkout Practice</h1>
-          <RulesHelpButton gameId="checkout" />
-          <InGameSettings />
-        </div>
+        <h1 className="text-2xl font-semibold">Checkout Practice</h1>
         <span
           className="text-sm text-slate-500 dark:text-slate-400"
           data-testid="checkout-progress"
@@ -207,7 +203,7 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
       )}
 
       {!sessionDone && (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex items-center gap-2">
           <button
             type="button"
             onClick={() => run(undo)}
@@ -226,14 +222,18 @@ export function CheckoutView({ view, dispatch, undo, forfeit, onPlayAgain }: Pro
           >
             Forfeit
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="ml-auto rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            data-testid="checkout-quit"
-          >
-            Quit
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <RulesHelpButton gameId="checkout" />
+            <InGameSettings />
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              data-testid="checkout-quit"
+            >
+              Quit
+            </button>
+          </div>
         </div>
       )}
 

@@ -50,10 +50,7 @@ export function FreeformView({ session, events, view, dispatch, undo, forfeit }:
   return (
     <section className="mx-auto max-w-3xl">
       <header className="flex items-baseline justify-between">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-2xl font-semibold">Active Game</h1>
-          <InGameSettings />
-        </div>
+        <h1 className="text-2xl font-semibold">Active Game</h1>
         <span className="text-sm text-slate-500 dark:text-slate-400">{session.gameModeId}</span>
       </header>
 
@@ -92,7 +89,7 @@ export function FreeformView({ session, events, view, dispatch, undo, forfeit }:
         ))}
       </div>
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex items-center gap-2">
         <button
           type="button"
           onClick={() => run(() => undo())}
@@ -109,13 +106,16 @@ export function FreeformView({ session, events, view, dispatch, undo, forfeit }:
         >
           Forfeit
         </button>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="ml-auto rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          Quit
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <InGameSettings />
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Quit
+          </button>
+        </div>
       </div>
 
       {actionError && (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
 import { useUiPrefs, useBackup } from '@/hooks';
+import { vibrateTap } from '@/lib/feedback';
 import { Modal, ToggleRow } from '@/ui/primitives';
 
 const THEMES: ReadonlyArray<Theme> = ['light', 'dark', 'system'];
@@ -42,7 +43,7 @@ export function InGameSettings({ className = '' }: Props) {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { vibrateTap(haptics); setOpen(true); }}
         aria-label="Settings"
         title="Settings"
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white ${className}`}

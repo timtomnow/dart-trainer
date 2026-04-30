@@ -45,7 +45,7 @@ export function vibrateTap(hapticsEnabled: boolean): void {
   if (!hapticsEnabled) return;
   if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
   try {
-    navigator.vibrate(10);
+    navigator.vibrate(40);
   } catch {
     /* navigator.vibrate is best-effort. */
   }
