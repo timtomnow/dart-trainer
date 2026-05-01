@@ -208,7 +208,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
       </dl>
 
       {!sessionEndData && (
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-8 flex items-center gap-2">
           <button
             type="button"
             onClick={() => run(() => undo())}

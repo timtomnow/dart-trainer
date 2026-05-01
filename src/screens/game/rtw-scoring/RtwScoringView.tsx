@@ -132,7 +132,7 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
       />
 
       {!sessionDone && (
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-12 flex items-center gap-2">
           <button
             type="button"
             onClick={() => run(undo)}

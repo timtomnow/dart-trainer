@@ -151,7 +151,7 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
       </dl>
 
       {!sessionEndData && (
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-8 flex items-center gap-2">
           <button
             type="button"
             onClick={() => run(() => undo())}
