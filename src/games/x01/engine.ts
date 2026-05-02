@@ -1,6 +1,7 @@
 import { X01_GAME_ID } from './config';
 import type { X01Config } from './config';
 import { buildX01State } from './replay';
+import { applyDart } from './rules';
 import type {
   X01Action,
   X01DartIndex,
@@ -165,13 +166,30 @@ function reduce(
         : 0;
     const dartIndex: X01DartIndex = (openTurn ? openTurn.darts.length : 0) as X01DartIndex;
 
+    const currentRemaining = openTurn
+      ? openTurn.startRemaining - openTurn.scored
+      : leg?.remaining[action.participantId] ?? state.config.startScore;
+    const currentOpened = openTurn
+      ? (leg!.opened[openTurn.participantId]! ||
+         openTurn.darts.some((d) => d.scored > 0 && (d.segment === 'D' || d.segment === 'DB')))
+      : (leg?.opened[action.participantId] ?? (state.config.inRule === 'straight'));
+    const dartOutcome = applyDart({
+      remaining: currentRemaining,
+      opened: currentOpened,
+      config: state.config,
+      segment: action.segment,
+      value: action.value
+    });
+    const bustFillCount = dartOutcome.kind === 'bust' ? 2 - dartIndex : 0;
+
     const payload: X01ThrowPayload = {
       participantId: action.participantId,
       segment: action.segment,
       value: action.value,
       dartIndex,
       legIndex,
-      turnIndexInLeg
+      turnIndexInLeg,
+      bustFillCount: bustFillCount > 0 ? bustFillCount : undefined
     };
     const event = makeEvent(state.sessionId, nextSeq, 'throw', payload, seeds);
     const nextLog = [...state.inputEventLog, event];

@@ -66,6 +66,8 @@ export type X01ThrowPayload = {
   dartIndex: X01DartIndex;
   legIndex: number;
   turnIndexInLeg: number;
+  /** How many synthetic fill darts to append after a bust so the turn counts as 3. */
+  bustFillCount?: number;
 };
 
 export type X01LegStats = {

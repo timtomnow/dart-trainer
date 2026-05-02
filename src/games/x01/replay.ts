@@ -13,6 +13,7 @@ type ThrowPayload = {
   participantId: string;
   segment: ThrowSegment;
   value: number;
+  bustFillCount?: number;
 };
 
 function createLeg(
@@ -204,6 +205,10 @@ export function buildX01State(
       }
     } else if (outcome.kind === 'bust') {
       turn.darts.push(dart);
+      const fills = payload.bustFillCount ?? 0;
+      for (let i = 0; i < fills; i++) {
+        turn.darts.push({ eventId: ev.id, segment: 'MISS', value: 0, scored: 0 });
+      }
       commitBust(turn, ev.timestamp);
     } else if (outcome.kind === 'checkout') {
       dart.scored = outcome.scored;
