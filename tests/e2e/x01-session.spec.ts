@@ -14,7 +14,6 @@ test('x01 301 leg: score, bust, and checkout on D20', async ({ page }) => {
   await page.getByTestId('home-play').click();
   await page.getByTestId('x01-start-score').selectOption('301');
   await page.getByTestId('x01-out-rule').selectOption('double');
-  await page.getByTestId('x01-legs-to-win').fill('1');
   await page.getByTestId('x01-start').click();
 
   await expect(page.getByRole('heading', { name: /^x01$/i })).toBeVisible();

@@ -46,6 +46,7 @@ import {
 } from '@/games/x01vc';
 import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
+import { StepperInput } from '@/ui/primitives';
 
 // Common checkout finishes grouped by range
 const HIGH_FINISHES = [170, 167, 164, 161, 160, 158, 157, 130, 127, 120, 110, 100];
@@ -350,23 +351,16 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm">
+              <div className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Legs to win</span>
-                <input
-                  type="number"
+                <StepperInput
+                  value={x01Config.legsToWin}
                   min={1}
                   max={9}
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-                  value={x01Config.legsToWin}
-                  onChange={(e) =>
-                    setX01Config((c) => ({
-                      ...c,
-                      legsToWin: Math.max(1, Math.min(9, Number(e.target.value) || 1))
-                    }))
-                  }
+                  onValue={(n) => setX01Config((c) => ({ ...c, legsToWin: n }))}
                   data-testid="x01-legs-to-win"
                 />
-              </label>
+              </div>
 
               <label className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">In rule</span>
@@ -470,23 +464,16 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm">
+              <div className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Legs to win</span>
-                <input
-                  type="number"
+                <StepperInput
+                  value={x01vcBaseConfig.legsToWin}
                   min={1}
                   max={9}
-                  className={SELECT_CLS}
-                  value={x01vcBaseConfig.legsToWin}
-                  onChange={(e) =>
-                    setX01vcBaseConfig((c) => ({
-                      ...c,
-                      legsToWin: Math.max(1, Math.min(9, Number(e.target.value) || 1))
-                    }))
-                  }
+                  onValue={(n) => setX01vcBaseConfig((c) => ({ ...c, legsToWin: n }))}
                   data-testid="x01vc-legs-to-win"
                 />
-              </label>
+              </div>
 
               <label className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">In rule</span>
@@ -595,23 +582,16 @@ export function PlayScreen() {
         ) : (
           <>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="text-sm">
+              <div className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Legs to win</span>
-                <input
-                  type="number"
+                <StepperInput
+                  value={cricketConfig.legsToWin}
                   min={1}
                   max={9}
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-                  value={cricketConfig.legsToWin}
-                  onChange={(e) =>
-                    setCricketConfig((c) => ({
-                      ...c,
-                      legsToWin: Math.max(1, Math.min(9, Number(e.target.value) || 1))
-                    }))
-                  }
+                  onValue={(n) => setCricketConfig((c) => ({ ...c, legsToWin: n }))}
                   data-testid="cricket-legs-to-win"
                 />
-              </label>
+              </div>
             </div>
 
             <button
@@ -825,23 +805,16 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm">
+              <div className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Attempts per finish</span>
-                <input
-                  type="number"
+                <StepperInput
+                  value={checkoutConfig.attemptsPerFinish}
                   min={1}
                   max={10}
-                  className={SELECT_CLS}
-                  value={checkoutConfig.attemptsPerFinish}
-                  onChange={(e) =>
-                    setCheckoutConfig((c) => ({
-                      ...c,
-                      attemptsPerFinish: Math.max(1, Math.min(10, Number(e.target.value) || 1))
-                    }))
-                  }
+                  onValue={(n) => setCheckoutConfig((c) => ({ ...c, attemptsPerFinish: n }))}
                   data-testid="checkout-attempts-per-finish"
                 />
-              </label>
+              </div>
 
               <label className="text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Out rule</span>
