@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
-import { useUiPrefs, useBackup } from '@/hooks';
+import { useUiPrefs, useBackup, useKeypadLayout } from '@/hooks';
 import { vibrateTap } from '@/lib/feedback';
 import { Modal, ToggleRow } from '@/ui/primitives';
 
@@ -19,6 +19,7 @@ export function InGameSettings({ className = '' }: Props) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { sound, haptics, setSound, setHaptics } = useUiPrefs();
+  const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const { deleteAllData } = useBackup();
 
   async function handleDeleteAll() {
@@ -105,6 +106,38 @@ export function InGameSettings({ className = '' }: Props) {
             <div className="mt-1 divide-y divide-slate-200 dark:divide-slate-700">
               <ToggleRow label="Sound" checked={sound} onChange={setSound} />
               <ToggleRow label="Haptics" checked={haptics} onChange={setHaptics} />
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Keypad
+            </h4>
+            <div
+              role="radiogroup"
+              aria-label="Keypad layout"
+              className="mt-2 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900"
+            >
+              {(['sequential', 'dartboard'] as const).map((layout) => {
+                const active = keypadLayout === layout;
+                return (
+                  <button
+                    key={layout}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setKeypadLayout(layout)}
+                    className={[
+                      'rounded-md px-3 py-1.5 text-sm transition-colors',
+                      active
+                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                    ].join(' ')}
+                  >
+                    {layout === 'sequential' ? 'Sequential' : 'Dartboard'}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
