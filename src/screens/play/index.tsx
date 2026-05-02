@@ -44,7 +44,7 @@ import {
   type WhoGoesFirst,
   type X01VCConfig
 } from '@/games/x01vc';
-import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
+import { useProfile, useProfiles, useSessions } from '@/hooks';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 // Common checkout finishes grouped by range
@@ -129,7 +129,6 @@ export function PlayScreen() {
   const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
   const [rtwScoringConfig, setRtwScoringConfig] = useState<RtwScoringConfig>(RTW_SCORING_DEFAULT_CONFIG);
   const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig>(CHECKOUT_DEFAULT_CONFIG);
-  const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -548,18 +547,6 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm sm:col-span-2">
-                <span className="text-slate-500 dark:text-slate-400">Keypad layout</span>
-                <select
-                  className={SELECT_CLS}
-                  value={keypadLayout}
-                  onChange={(e) => setKeypadLayout(e.target.value as 'sequential' | 'dartboard')}
-                  data-testid="x01vc-keypad-layout"
-                >
-                  <option value="sequential">Sequential (1–20)</option>
-                  <option value="dartboard">Dartboard (clock layout)</option>
-                </select>
-              </label>
             </div>
 
             <button
@@ -859,18 +846,6 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm sm:col-span-2">
-                <span className="text-slate-500 dark:text-slate-400">Keypad layout</span>
-                <select
-                  className={SELECT_CLS}
-                  value={keypadLayout}
-                  onChange={(e) => setKeypadLayout(e.target.value as 'sequential' | 'dartboard')}
-                  data-testid="checkout-keypad-layout"
-                >
-                  <option value="sequential">Sequential (1–20)</option>
-                  <option value="dartboard">Dartboard (clock layout)</option>
-                </select>
-              </label>
             </div>
 
             <div className="mt-3">
