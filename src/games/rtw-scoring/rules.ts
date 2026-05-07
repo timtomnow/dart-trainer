@@ -8,7 +8,7 @@ export function getTargetSequence(config: RtwScoringConfig): number[] {
   let base: number[];
 
   if (config.order === 'Random' && config.customSequence && config.customSequence.length > 0) {
-    base = config.customSequence.slice();
+    return config.customSequence.slice();
   } else {
     switch (config.order) {
       case '1-20':              base = SEQUENCE_1_20.slice(); break;
