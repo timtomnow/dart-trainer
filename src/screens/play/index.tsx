@@ -44,7 +44,7 @@ import {
   type WhoGoesFirst,
   type X01VCConfig
 } from '@/games/x01vc';
-import { useKeypadLayout, useProfile, useProfiles, useSessions } from '@/hooks';
+import { useProfile, useProfiles, useSessions } from '@/hooks';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 import { StepperInput } from '@/ui/primitives';
 
@@ -130,7 +130,6 @@ export function PlayScreen() {
   const [rtwConfig, setRtwConfig] = useState<RtwConfig>(RTW_DEFAULT_CONFIG);
   const [rtwScoringConfig, setRtwScoringConfig] = useState<RtwScoringConfig>(RTW_SCORING_DEFAULT_CONFIG);
   const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig>(CHECKOUT_DEFAULT_CONFIG);
-  const { keypadLayout, setKeypadLayout } = useKeypadLayout();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -393,18 +392,6 @@ export function PlayScreen() {
                 </select>
               </label>
 
-              <label className="text-sm sm:col-span-2">
-                <span className="text-slate-500 dark:text-slate-400">Keypad layout</span>
-                <select
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-                  value={keypadLayout}
-                  onChange={(e) => setKeypadLayout(e.target.value as 'sequential' | 'dartboard')}
-                  data-testid="x01-keypad-layout"
-                >
-                  <option value="sequential">Sequential (1–20)</option>
-                  <option value="dartboard">Dartboard (clock layout)</option>
-                </select>
-              </label>
             </div>
 
             <button
@@ -546,6 +533,7 @@ export function PlayScreen() {
                   <option value="random">Random</option>
                 </select>
               </label>
+
             </div>
 
             <button
@@ -830,6 +818,7 @@ export function PlayScreen() {
                   <option value="masters">Masters out</option>
                 </select>
               </label>
+
             </div>
 
             <div className="mt-3">

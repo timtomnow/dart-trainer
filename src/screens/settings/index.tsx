@@ -4,7 +4,7 @@ import { InstallSection } from './InstallSection';
 import { ProfilesSection } from './ProfilesSection';
 import { QuotaHint } from './QuotaHint';
 import { useTheme, type Theme } from '@/app/providers/ThemeProvider';
-import { useUiPrefs } from '@/hooks';
+import { useUiPrefs, useKeypadLayout } from '@/hooks';
 import { ToggleRow } from '@/ui/primitives';
 
 const THEMES: ReadonlyArray<Theme> = ['light', 'dark', 'system'];
@@ -12,6 +12,7 @@ const THEMES: ReadonlyArray<Theme> = ['light', 'dark', 'system'];
 export function SettingsScreen() {
   const { theme, setTheme } = useTheme();
   const { sound, haptics, setSound, setHaptics } = useUiPrefs();
+  const { keypadLayout, setKeypadLayout } = useKeypadLayout();
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -69,6 +70,29 @@ export function SettingsScreen() {
             checked={haptics}
             onChange={setHaptics}
           />
+        </div>
+      </section>
+
+      <section aria-labelledby="keypad-heading" className="mt-10">
+        <h2
+          id="keypad-heading"
+          className="text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Keypad
+        </h2>
+        <div className="mt-2">
+          <label className="text-sm">
+            <span className="block text-slate-500 dark:text-slate-400">Layout</span>
+            <select
+              className="mt-1 rounded-md border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              value={keypadLayout}
+              onChange={(e) => setKeypadLayout(e.target.value as 'sequential' | 'dartboard')}
+              data-testid="settings-keypad-layout"
+            >
+              <option value="sequential">Sequential (1–20)</option>
+              <option value="dartboard">Dartboard (clock layout)</option>
+            </select>
+          </label>
         </div>
       </section>
 
