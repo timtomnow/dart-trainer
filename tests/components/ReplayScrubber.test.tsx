@@ -119,15 +119,15 @@ describe('ReplayScrubber', () => {
     expect(q.getByTestId('replay-position')).toHaveTextContent(`Event 6 / 6`);
   });
 
-  it('renders freeform replay showing throw count at position', () => {
-    const freeformSession = makeSession({ gameModeId: 'freeform', gameConfig: {} });
-    const freeformEvents: GameEvent[] = [
+  it('renders generic replay showing throw count at position for non-x01 modes', () => {
+    const genericSession = makeSession({ gameModeId: 'cricket', gameConfig: { legsToWin: 1 } });
+    const genericEvents: GameEvent[] = [
       makeThrow(0, 'T', 60),
       makeThrow(1, 'S', 20),
       makeThrow(2, 'D', 10)
     ];
-    const { q } = renderScrubber(freeformSession, freeformEvents);
+    const { q } = renderScrubber(genericSession, genericEvents);
     fireEvent.change(q.getByTestId('replay-slider'), { target: { value: '2' } });
-    expect(q.getByTestId('replay-freeform')).toHaveTextContent('Throws at this point: 2');
+    expect(q.getByTestId('replay-generic')).toHaveTextContent('Throws at this point: 2');
   });
 });

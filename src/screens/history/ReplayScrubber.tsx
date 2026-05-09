@@ -8,10 +8,10 @@ type Props = {
   events: GameEvent[];
 };
 
-function FreeformReplay({ events, position }: { events: GameEvent[]; position: number }) {
+function GenericReplay({ events, position }: { events: GameEvent[]; position: number }) {
   const count = events.slice(0, position).filter((e) => e.type === 'throw').length;
   return (
-    <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-800/60" data-testid="replay-freeform">
+    <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-800/60" data-testid="replay-generic">
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Throws at this point: <span className="font-semibold tabular-nums">{count}</span>
       </p>
@@ -104,7 +104,7 @@ export function ReplayScrubber({ session, events }: Props) {
         {isX01 ? (
           <X01Replay session={session} events={events} position={position} />
         ) : (
-          <FreeformReplay events={events} position={position} />
+          <GenericReplay events={events} position={position} />
         )}
       </div>
 

@@ -28,8 +28,8 @@ describe('useSessions filter: gameModeId', () => {
       participants: [profile.id]
     });
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     // Mark both as completed so they appear in history lists
@@ -51,7 +51,7 @@ describe('useSessions filter: gameModeId', () => {
     await adapter.init();
     const profile = await adapter.createProfile({ name: 'P1' });
     await adapter.createSession({ gameModeId: 'x01', gameConfig: {}, participants: [profile.id] });
-    await adapter.createSession({ gameModeId: 'freeform', gameConfig: {}, participants: [profile.id] });
+    await adapter.createSession({ gameModeId: 'cricket', gameConfig: { legsToWin: 1 }, participants: [profile.id] });
     const all = await adapter.listSessions();
     for (const s of all) await adapter.updateSessionStatus(s.id, 'completed');
 
@@ -73,14 +73,14 @@ describe('useSessions filter: since / until', () => {
 
     // Create a session with a fixed startedAt in the past
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id],
       startedAt: '2025-01-01T10:00:00.000Z'
     });
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id],
       startedAt: '2025-06-01T10:00:00.000Z'
     });
@@ -103,14 +103,14 @@ describe('useSessions filter: since / until', () => {
     const profile = await adapter.createProfile({ name: 'P1' });
 
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id],
       startedAt: '2025-01-01T10:00:00.000Z'
     });
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id],
       startedAt: '2025-12-01T10:00:00.000Z'
     });
@@ -139,8 +139,8 @@ describe('useSessions filter: since / until', () => {
       startedAt: '2025-01-01T10:00:00.000Z'
     });
     await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id],
       startedAt: '2025-06-01T10:00:00.000Z'
     });

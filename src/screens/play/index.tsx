@@ -188,7 +188,7 @@ export function PlayScreen() {
     }
   };
 
-  const SOLO_ONLY = new Set([CHECKOUT_GAME_ID, 'freeform']);
+  const SOLO_ONLY = new Set<string>([CHECKOUT_GAME_ID]);
 
   const startSession = async (
     gameModeId: string,

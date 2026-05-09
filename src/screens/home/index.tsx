@@ -1,34 +1,42 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FREEFORM_GAME_ID } from '@/games/freeform';
+import type { Session } from '@/domain/types';
 import { useProfile, useSessions } from '@/hooks';
+
+const GAME_MODE_LABELS: Record<string, string> = {
+  x01: 'X01',
+  x01vc: 'X01 vs Computer',
+  cricket: 'Cricket',
+  rtw: 'Round the World',
+  'rtw-scoring': 'RTW Scoring',
+  checkout: 'Checkout Practice'
+};
+
+function gameModeLabel(id: string): string {
+  return GAME_MODE_LABELS[id] ?? id;
+}
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { sessions, create } = useSessions({ status: 'in_progress' });
-  const [starting, setStarting] = useState(false);
+  const { sessions, discard } = useSessions({ status: 'in_progress' });
   const [error, setError] = useState<string | null>(null);
 
-  const resumable = useMemo(() => {
-    if (!profile) return null;
-    return sessions.find((s) => s.participants.includes(profile.id)) ?? null;
+  const inProgress = useMemo(() => {
+    if (!profile) return [];
+    return sessions.filter((s) => s.participants.includes(profile.id));
   }, [sessions, profile]);
 
-  const startFreeform = async () => {
-    if (!profile) return;
-    setStarting(true);
+  const discardSession = async (session: Session) => {
+    const confirmed = window.confirm(
+      'Permanently discard this in-progress session? This cannot be undone.'
+    );
+    if (!confirmed) return;
     setError(null);
     try {
-      const session = await create({
-        gameModeId: FREEFORM_GAME_ID,
-        gameConfig: {},
-        participants: [profile.id]
-      });
-      navigate(`/game/${session.id}`);
+      await discard(session.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-      setStarting(false);
     }
   };
 
@@ -39,26 +47,62 @@ export function HomeScreen() {
         Local-first darts training. Your data stays on this device.
       </p>
 
-      {resumable && (
-        <div
-          className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950"
-          data-testid="resume-card"
+      <section className="mt-6" aria-labelledby="in-progress-heading">
+        <h2
+          id="in-progress-heading"
+          className="text-sm font-semibold text-slate-700 dark:text-slate-300"
         >
-          <div className="text-sm font-medium text-amber-900 dark:text-amber-200">
-            Resume in-progress session
-          </div>
-          <div className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-            {resumable.gameModeId} · started {new Date(resumable.startedAt).toLocaleString()}
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate(`/game/${resumable.id}`)}
-            className="mt-3 inline-flex items-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500"
+          In-progress sessions
+        </h2>
+
+        {inProgress.length === 0 ? (
+          <p
+            className="mt-2 text-sm text-slate-500 dark:text-slate-400"
+            data-testid="in-progress-empty"
           >
-            Resume
-          </button>
-        </div>
-      )}
+            No sessions in progress.
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-2" data-testid="in-progress-list">
+            {inProgress.map((session) => (
+              <li
+                key={session.id}
+                className="rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950"
+                data-testid={`in-progress-row-${session.id}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                      {gameModeLabel(session.gameModeId)}
+                    </div>
+                    <div className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
+                      Started {new Date(session.startedAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/game/${session.id}`)}
+                      className="inline-flex items-center rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-500"
+                      data-testid={`in-progress-resume-${session.id}`}
+                    >
+                      Resume
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void discardSession(session)}
+                      className="inline-flex items-center rounded-md border border-amber-400 px-3 py-1.5 text-sm font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900"
+                      data-testid={`in-progress-discard-${session.id}`}
+                    >
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button
@@ -69,14 +113,6 @@ export function HomeScreen() {
           data-testid="home-play"
         >
           Play
-        </button>
-        <button
-          type="button"
-          onClick={startFreeform}
-          disabled={!profile || starting}
-          className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          {starting ? 'Starting…' : 'Start freeform session'}
         </button>
       </div>
       {error && (

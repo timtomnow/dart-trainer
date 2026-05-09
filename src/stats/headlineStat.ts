@@ -4,14 +4,12 @@ import { buildX01State } from '@/games/x01/replay';
 
 export type HeadlineStat =
   | { kind: 'x01_highest_finish'; value: number }
-  | { kind: 'freeform_throws'; value: number }
   | { kind: 'throws'; value: number };
 
 export function formatHeadlineStat(stat: HeadlineStat): string {
   switch (stat.kind) {
     case 'x01_highest_finish':
       return stat.value > 0 ? `Best finish: ${stat.value}` : 'No finish';
-    case 'freeform_throws':
     case 'throws':
       return `${stat.value} throw${stat.value === 1 ? '' : 's'}`;
   }
@@ -36,8 +34,5 @@ export function computeHeadlineStat(
   }
 
   const throwCount = events.filter((e) => e.type === 'throw').length;
-  if (session.gameModeId === 'freeform') {
-    return { kind: 'freeform_throws', value: throwCount };
-  }
   return { kind: 'throws', value: throwCount };
 }

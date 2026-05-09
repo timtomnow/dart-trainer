@@ -30,7 +30,7 @@ These boundaries are enforced by ESLint `no-restricted-paths`. If you need to cr
 - No `Date.now()`, `Math.random()`, `fetch`, `indexedDB`, or React imports inside `src/games/**`.
 - If an engine needs time or randomness, take them as injected functions: `now: () => string`, `rng: () => number`.
 - Engines return `{ state, events, error? }`. They never mutate inputs.
-- One game = one folder under `src/games/<id>/` implementing `GameEngine`. Current folders: `x01`, `x01vc`, `cricket`, `rtw`, `rtw-scoring`, `checkout`, `freeform`, `drill`, plus `engine/` (interface + shared helpers) and `ai/` (pure `aiThrow` function). Do not build a meta-framework for games.
+- One game = one folder under `src/games/<id>/` implementing `GameEngine`. Current folders: `x01`, `x01vc`, `cricket`, `rtw`, `rtw-scoring`, `checkout`, `drill`, plus `engine/` (interface + shared helpers) and `ai/` (pure `aiThrow` function). Do not build a meta-framework for games.
 - AI difficulty is a 1–10 integer scale (1 = beginner, 10 = expert). Tuning lives in `src/games/ai/`. AI seats are participants on a session, not profiles — never add an AI to the profiles store.
 
 ## Events are the source of truth

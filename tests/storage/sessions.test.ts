@@ -69,12 +69,12 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('creates a session with status in_progress and assigns startedAt', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const session = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     expect(session.status).toBe('in_progress');
-    expect(session.gameModeId).toBe('freeform');
+    expect(session.gameModeId).toBe('cricket');
     expect(session.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(session.participants).toEqual([profile.id]);
     expect(session.startedAt).toBe('2026-04-18T12:00:00.000Z');
@@ -83,13 +83,13 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('lists sessions filtered by status', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const a = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     const b = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     await adapter.updateSessionStatus(b.id, 'forfeited');
@@ -102,8 +102,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('appendEvent assigns monotonic seq per session', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     await adapter.appendEvent(makeEvent(s.id, VALID_IDS[5]!, 0));
@@ -116,8 +116,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('rejects a non-monotonic seq', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     await adapter.appendEvent(makeEvent(s.id, VALID_IDS[5]!, 0));
@@ -129,8 +129,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('popLastInputEvent removes the most recent throw/forfeit/note', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     await adapter.appendEvent(makeEvent(s.id, VALID_IDS[5]!, 0, 'throw'));
@@ -144,8 +144,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('popLastInputEvent skips derived events and returns null when empty', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     expect(await adapter.popLastInputEvent(s.id)).toBeNull();
@@ -154,8 +154,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('deleteSession soft-deletes by setting status to deleted', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     await adapter.deleteSession(s.id);
@@ -166,8 +166,8 @@ describe('DexieStorageAdapter sessions & events', () => {
   it('rejects events with invalid schemaVersion', async () => {
     const profile = (await adapter.listProfiles())[0]!;
     const s = await adapter.createSession({
-      gameModeId: 'freeform',
-      gameConfig: {},
+      gameModeId: 'cricket',
+      gameConfig: { legsToWin: 1 },
       participants: [profile.id]
     });
     const bad = { ...makeEvent(s.id, VALID_IDS[5]!, 0), schemaVersion: 99 } as unknown as GameEvent;

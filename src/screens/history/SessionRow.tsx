@@ -36,7 +36,11 @@ function outcomeClass(status: Session['status']): string {
 function gameModeLabel(gameModeId: string): string {
   switch (gameModeId) {
     case 'x01': return 'X01';
-    case 'freeform': return 'Freeform';
+    case 'x01vc': return 'X01 vs Computer';
+    case 'cricket': return 'Cricket';
+    case 'rtw': return 'Round the World';
+    case 'rtw-scoring': return 'RTW Scoring';
+    case 'checkout': return 'Checkout Practice';
     default: return gameModeId;
   }
 }

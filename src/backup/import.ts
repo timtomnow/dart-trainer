@@ -27,6 +27,47 @@ const RawManifest = z.object({
   data: z.unknown()
 });
 
+const RETIRED_GAME_MODE_IDS = new Set<string>(['freeform']);
+
+function stripUnsupportedGameModes(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+  const d = data as { sessions?: unknown[]; events?: unknown[] } & Record<string, unknown>;
+  const sessions = Array.isArray(d.sessions) ? d.sessions : [];
+  const events = Array.isArray(d.events) ? d.events : [];
+  const retiredSessionIds = new Set<string>();
+  const keptSessions = sessions.filter((s) => {
+    const obj = s as { id?: unknown; gameModeId?: unknown };
+    const gameModeId = typeof obj.gameModeId === 'string' ? obj.gameModeId : '';
+    if (RETIRED_GAME_MODE_IDS.has(gameModeId)) {
+      if (typeof obj.id === 'string') retiredSessionIds.add(obj.id);
+      return false;
+    }
+    return true;
+  });
+  if (retiredSessionIds.size === 0) return data;
+  const keptEvents = events.filter((e) => {
+    const obj = e as { sessionId?: unknown };
+    return typeof obj.sessionId !== 'string' || !retiredSessionIds.has(obj.sessionId);
+  });
+  return { ...d, sessions: keptSessions, events: keptEvents };
+}
+
+function recomputeBackupCounts(raw: unknown, cleanedData: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  if (!cleanedData || typeof cleanedData !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  const counts = (r.counts && typeof r.counts === 'object' ? r.counts : {}) as Record<string, unknown>;
+  const d = cleanedData as { sessions?: unknown[]; events?: unknown[] };
+  return {
+    ...r,
+    counts: {
+      ...counts,
+      sessions: Array.isArray(d.sessions) ? d.sessions.length : counts.sessions,
+      events: Array.isArray(d.events) ? d.events.length : counts.events
+    }
+  };
+}
+
 export async function validateBackupFile(
   file: File
 ): Promise<{ manifest: BackupManifestType; counts: ImportResult }> {
@@ -65,8 +106,10 @@ export async function validateBackupFile(
   }
 
   const migratedData = migrateBackupData(data, schemaVersion);
+  const cleanedData = stripUnsupportedGameModes(migratedData);
+  const cleanedRaw = recomputeBackupCounts(raw, cleanedData);
 
-  const parsed = BackupManifest.safeParse({ ...(raw as object), data: migratedData });
+  const parsed = BackupManifest.safeParse({ ...(cleanedRaw as object), data: cleanedData });
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     throw new Error(`Backup validation failed: ${first?.message ?? 'unknown error'}`);

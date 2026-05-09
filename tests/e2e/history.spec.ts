@@ -17,14 +17,11 @@ test('history: filter by mode and open x01 session detail with replay scrubber',
 }) => {
   await createProfile(page);
 
-  // ── play a freeform session and forfeit ──────────────────────────────────
-  await page.getByRole('button', { name: /start freeform session/i }).click();
-  await expect(page.getByRole('heading', { name: /active game/i })).toBeVisible();
-  await page.getByRole('button', { name: /^s20$/i }).click();
-  await page.getByRole('button', { name: /^forfeit$/i }).click();
-  // wait for the session status to update before navigating away
-  await expect(page.getByTestId('session-status')).toHaveText('forfeited');
-  await page.getByRole('button', { name: /^quit$/i }).click();
+  // ── play a cricket session and forfeit ──────────────────────────────────
+  await page.getByTestId('home-play').click();
+  await page.getByTestId('cricket-start').click();
+  await page.getByTestId('cricket-forfeit').click();
+  await page.getByTestId('cricket-quit').click();
   await expect(page.getByRole('heading', { name: /^home$/i })).toBeVisible();
 
   // ── play a 301 x01 session (T20×3 → remaining 121; T20 T7 D20 → checkout) ─

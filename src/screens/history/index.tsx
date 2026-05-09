@@ -1,18 +1,28 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SessionRow } from './SessionRow';
 import type { ListSessionsFilter } from '@/hooks';
 import { useQuotaHint, useSessions } from '@/hooks';
 
-type ModeFilter = 'all' | 'x01' | 'freeform';
-
 const TERMINAL_STATUSES = ['completed', 'forfeited', 'abandoned'] as const;
 
-function buildFilter(mode: ModeFilter, since: string, until: string): ListSessionsFilter {
+const GAME_MODE_LABELS: Record<string, string> = {
+  x01: 'X01',
+  x01vc: 'X01 vs Computer',
+  cricket: 'Cricket',
+  rtw: 'Round the World',
+  'rtw-scoring': 'RTW Scoring',
+  checkout: 'Checkout Practice'
+};
+
+function gameModeLabel(id: string): string {
+  return GAME_MODE_LABELS[id] ?? id;
+}
+
+function buildFilter(since: string, until: string): ListSessionsFilter {
   const filter: ListSessionsFilter = {
     status: [...TERMINAL_STATUSES]
   };
-  if (mode !== 'all') filter.gameModeId = mode;
   if (since) filter.since = new Date(since).toISOString();
   if (until) {
     const d = new Date(until);
@@ -23,13 +33,25 @@ function buildFilter(mode: ModeFilter, since: string, until: string): ListSessio
 }
 
 export function HistoryScreen() {
-  const [mode, setMode] = useState<ModeFilter>('all');
+  const [mode, setMode] = useState<string>('all');
   const [since, setSince] = useState('');
   const [until, setUntil] = useState('');
 
-  const filter = buildFilter(mode, since, until);
-  const { sessions, loading } = useSessions(filter);
+  const filter = buildFilter(since, until);
+  const { sessions: allInWindow, loading } = useSessions(filter);
   const quotaHint = useQuotaHint();
+
+  const availableModes = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of allInWindow) set.add(s.gameModeId);
+    return Array.from(set).sort();
+  }, [allInWindow]);
+
+  const sessions = useMemo(
+    () => (mode === 'all' ? allInWindow : allInWindow.filter((s) => s.gameModeId === mode)),
+    [allInWindow, mode]
+  );
+
   const filtersActive = mode !== 'all' || Boolean(since) || Boolean(until);
 
   return (
@@ -62,13 +84,16 @@ export function HistoryScreen() {
           </label>
           <select
             value={mode}
-            onChange={(e) => setMode(e.target.value as ModeFilter)}
+            onChange={(e) => setMode(e.target.value)}
             className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
             data-testid="history-filter-mode"
           >
             <option value="all">All modes</option>
-            <option value="x01">X01</option>
-            <option value="freeform">Freeform</option>
+            {availableModes.map((id) => (
+              <option key={id} value={id}>
+                {gameModeLabel(id)}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -98,7 +123,7 @@ export function HistoryScreen() {
           />
         </div>
 
-        {(mode !== 'all' || since || until) && (
+        {filtersActive && (
           <button
             type="button"
             onClick={() => { setMode('all'); setSince(''); setUntil(''); }}

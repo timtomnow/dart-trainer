@@ -2,14 +2,12 @@ import { useCallback, useMemo } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CheckoutView } from './checkout/CheckoutView';
 import { CricketView } from './cricket/CricketView';
-import { FreeformView } from './freeform/FreeformView';
 import { RtwView } from './rtw/RtwView';
 import { RtwScoringView } from './rtw-scoring/RtwScoringView';
 import { X01View } from './x01/X01View';
 import { X01VCView } from './x01vc/X01VCView';
 import type { CheckoutAction, CheckoutViewModel } from '@/games/checkout';
 import type { CricketAction, CricketViewModel } from '@/games/cricket';
-import type { FreeformAction, FreeformViewModel } from '@/games/freeform';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
 import type { RtwScoringAction, RtwScoringViewModel } from '@/games/rtw-scoring';
 import type { X01Action, X01ViewModel } from '@/games/x01';
@@ -137,13 +135,11 @@ export function GameScreen() {
   }
 
   return (
-    <FreeformView
-      session={session}
-      events={events}
-      view={view as FreeformViewModel}
-      dispatch={dispatch as (a: FreeformAction) => Promise<void>}
-      undo={undo}
-      forfeit={forfeit}
-    />
+    <section className="mx-auto max-w-3xl" role="alert">
+      <h1 className="text-2xl font-semibold">Active Game</h1>
+      <p className="mt-2 text-sm text-red-600">
+        Unsupported game mode: {session.gameModeId}
+      </p>
+    </section>
   );
 }
