@@ -1,208 +1,62 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ReplayScrubber } from './ReplayScrubber';
+import { MODE_DETAIL_REGISTRY } from './detail/registry';
+import { CommonConfigItems } from './detail/shared/CommonConfigItems';
+import { ConfigGrid, ConfigItem } from './detail/shared/ConfigGrid';
 import { useStorage } from '@/app/providers/StorageProvider';
 import type { GameEvent, Session } from '@/domain/types';
-import { parseX01Config } from '@/games/x01/config';
-import { buildX01State } from '@/games/x01/replay';
-import { useSessionDetail } from '@/hooks';
-import { computeX01LegBreakdowns, computeX01SessionStats } from '@/stats/x01Session';
+import { useProfiles, useSessionDetail } from '@/hooks';
 
-function formatDuration(startedAt: string, endedAt: string | undefined): string {
-  if (!endedAt) return 'ongoing';
-  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime();
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+function GenericConfigSummary({ session }: { session: Session }) {
+  return (
+    <ConfigGrid>
+      <ConfigItem label="Mode" value={<span className="capitalize">{session.gameModeId}</span>} />
+      <ConfigItem label="Players" value={session.participants.length} />
+      <CommonConfigItems session={session} />
+    </ConfigGrid>
+  );
 }
 
-function formatAvg(n: number) {
-  return n.toFixed(2);
+function isRtwGroupBPayload(p: Record<string, unknown>): boolean {
+  return 'hitsInTurn' in p && 'targetValue' in p;
 }
 
-function formatPct(n: number | null) {
-  return n === null ? '—' : `${n.toFixed(1)}%`;
+function isRtwGroupAPayload(p: Record<string, unknown>): boolean {
+  return 'hit' in p && 'targetValue' in p;
 }
 
-function ConfigSummary({ session }: { session: Session }) {
-  const isX01 = session.gameModeId === 'x01';
-  if (!isX01) {
-    return (
-      <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-        <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Mode</dt>
-          <dd className="font-medium capitalize">{session.gameModeId}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Participants</dt>
-          <dd className="font-medium">{session.participants.length}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Duration</dt>
-          <dd className="font-medium">{formatDuration(session.startedAt, session.endedAt)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500 dark:text-slate-400">Outcome</dt>
-          <dd className="font-medium capitalize">{session.status}</dd>
-        </div>
-      </dl>
-    );
+function isRtwScoringPayload(p: Record<string, unknown>): boolean {
+  return 'multiplier' in p && 'targetValue' in p;
+}
+
+function summarisePayload(type: string, payload: unknown): string {
+  if (!payload || typeof payload !== 'object') return '';
+  const p = payload as Record<string, unknown>;
+  if (type === 'throw') {
+    if (isRtwGroupBPayload(p)) {
+      return `T${p['targetValue']} — ${p['hitsInTurn']}/3 hits`;
+    }
+    if (isRtwGroupAPayload(p)) {
+      return `T${p['targetValue']} — ${p['hit'] ? 'hit' : 'miss'}`;
+    }
+    if (isRtwScoringPayload(p)) {
+      return `T${p['targetValue']} — ${String(p['multiplier'])}`;
+    }
+    const seg = String(p['segment'] ?? '');
+    const val = p['value'];
+    return `${seg}${val}`;
   }
-
-  const config = parseX01Config(session.gameConfig);
-  const OUT_LABEL: Record<typeof config.outRule, string> = {
-    straight: 'Straight-out',
-    double: 'Double-out',
-    masters: 'Masters-out'
-  };
-
-  return (
-    <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Start score</dt>
-        <dd className="font-medium" data-testid="detail-start-score">{config.startScore}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">In rule</dt>
-        <dd className="font-medium capitalize">{config.inRule}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Out rule</dt>
-        <dd className="font-medium">{OUT_LABEL[config.outRule]}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Legs</dt>
-        <dd className="font-medium">{config.legsToWin}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Duration</dt>
-        <dd className="font-medium">{formatDuration(session.startedAt, session.endedAt)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Outcome</dt>
-        <dd className="font-medium capitalize">{session.status}</dd>
-      </div>
-    </dl>
-  );
+  if (type === 'forfeit') return `pid:${String(p['participantId'] ?? '').slice(-4)}`;
+  if (type === 'note') return String(p['text'] ?? '').slice(0, 40);
+  return JSON.stringify(payload).slice(0, 60);
 }
 
-function X01LegTable({
-  session,
-  events,
-  participantId
-}: {
-  session: Session;
-  events: GameEvent[];
-  participantId: string;
-}) {
-  const config = parseX01Config(session.gameConfig);
-  const state = buildX01State(events, config, session.participants, session.id);
-  const breakdowns = computeX01LegBreakdowns(state.legs, participantId, config);
-
-  if (breakdowns.length === 0) {
-    return <p className="text-sm text-slate-500">No legs recorded.</p>;
+function displayEventType(type: string, payload: unknown): string {
+  if (type === 'throw' && payload && typeof payload === 'object') {
+    if (isRtwGroupBPayload(payload as Record<string, unknown>)) return 'turn';
   }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm" data-testid="x01-leg-table">
-        <thead>
-          <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-700">
-            <th className="pb-2 pr-4 font-medium">Leg</th>
-            <th className="pb-2 pr-4 font-medium">Darts</th>
-            <th className="pb-2 pr-4 font-medium">Checkout</th>
-            <th className="pb-2 pr-4 font-medium">3-dart avg</th>
-            <th className="pb-2 font-medium">Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          {breakdowns.map((leg) => {
-            const won = leg.winnerParticipantId === participantId;
-            return (
-              <tr
-                key={leg.legIndex}
-                className="border-b border-slate-100 dark:border-slate-800"
-                data-testid={`leg-row-${leg.legIndex}`}
-              >
-                <td className="py-2 pr-4 tabular-nums">{leg.legIndex + 1}</td>
-                <td className="py-2 pr-4 tabular-nums">{leg.dartsUsed || '—'}</td>
-                <td className="py-2 pr-4 tabular-nums">
-                  {leg.checkoutValue > 0 ? leg.checkoutValue : '—'}
-                </td>
-                <td className="py-2 pr-4 tabular-nums">
-                  {formatAvg(leg.legStats.threeDartAvg)}
-                </td>
-                <td
-                  className={`py-2 font-medium ${won ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}
-                >
-                  {won ? 'Won' : '—'}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function X01StatsPanel({
-  session,
-  events,
-  participantId
-}: {
-  session: Session;
-  events: GameEvent[];
-  participantId: string;
-}) {
-  const config = parseX01Config(session.gameConfig);
-  const state = buildX01State(events, config, session.participants, session.id);
-  const stats = computeX01SessionStats(state, config, participantId);
-
-  return (
-    <dl
-      className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60 sm:grid-cols-4"
-      data-testid="x01-session-stats"
-    >
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">3-dart avg</dt>
-        <dd className="font-semibold tabular-nums">{formatAvg(stats.threeDartAvg)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">First-9 avg</dt>
-        <dd className="font-semibold tabular-nums">
-          {stats.firstNineAvg !== null ? formatAvg(stats.firstNineAvg) : '—'}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Checkout %</dt>
-        <dd className="font-semibold tabular-nums">{formatPct(stats.checkoutPct)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Highest finish</dt>
-        <dd className="font-semibold tabular-nums">
-          {stats.highestFinish > 0 ? stats.highestFinish : '—'}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">180s</dt>
-        <dd className="font-semibold tabular-nums">{stats.count180}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Darts thrown</dt>
-        <dd className="font-semibold tabular-nums">{stats.dartsThrown}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Busts</dt>
-        <dd className="font-semibold tabular-nums">{stats.busts}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-slate-500 dark:text-slate-400">Legs won</dt>
-        <dd className="font-semibold tabular-nums">{stats.legsWon}</dd>
-      </div>
-    </dl>
-  );
+  return type;
 }
 
 function EventLogPanel({ events }: { events: GameEvent[] }) {
@@ -244,69 +98,38 @@ function EventLogPanel({ events }: { events: GameEvent[] }) {
   );
 }
 
-function isRtwGroupBPayload(p: Record<string, unknown>): boolean {
-  return 'hitsInTurn' in p && 'targetValue' in p;
-}
-
-function isRtwGroupAPayload(p: Record<string, unknown>): boolean {
-  return 'hit' in p && 'targetValue' in p;
-}
-
-function summarisePayload(type: string, payload: unknown): string {
-  if (!payload || typeof payload !== 'object') return '';
-  const p = payload as Record<string, unknown>;
-  if (type === 'throw') {
-    if (isRtwGroupBPayload(p)) {
-      return `T${p['targetValue']} — ${p['hitsInTurn']}/3 hits`;
-    }
-    if (isRtwGroupAPayload(p)) {
-      return `T${p['targetValue']} — ${p['hit'] ? 'hit' : 'miss'}`;
-    }
-    const seg = String(p['segment'] ?? '');
-    const val = p['value'];
-    return `${seg}${val}`;
-  }
-  if (type === 'forfeit') return `pid:${String(p['participantId'] ?? '').slice(-4)}`;
-  if (type === 'note') return String(p['text'] ?? '').slice(0, 40);
-  return JSON.stringify(payload).slice(0, 60);
-}
-
-function displayEventType(type: string, payload: unknown): string {
-  if (type === 'throw' && payload && typeof payload === 'object') {
-    if (isRtwGroupBPayload(payload as Record<string, unknown>)) return 'turn';
-  }
-  return type;
-}
-
 function SessionDetailContent({
   session,
-  events
+  events,
+  participantNames
 }: {
   session: Session;
   events: GameEvent[];
+  participantNames: Record<string, string>;
 }) {
-  const isX01 = session.gameModeId === 'x01';
-  const participantId = session.participants[0] ?? '';
+  const detailModule = MODE_DETAIL_REGISTRY[session.gameModeId];
 
   return (
     <div className="space-y-8">
       <section>
         <h2 className="mb-3 text-base font-semibold">Config</h2>
-        <ConfigSummary session={session} />
+        {detailModule ? (
+          <detailModule.ConfigSummary
+            session={session}
+            events={events}
+            participantNames={participantNames}
+          />
+        ) : (
+          <GenericConfigSummary session={session} />
+        )}
       </section>
 
-      {isX01 && (
-        <>
-          <section>
-            <h2 className="mb-3 text-base font-semibold">Legs</h2>
-            <X01LegTable session={session} events={events} participantId={participantId} />
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-base font-semibold">Stats</h2>
-            <X01StatsPanel session={session} events={events} participantId={participantId} />
-          </section>
-        </>
+      {detailModule && (
+        <detailModule.CustomContent
+          session={session}
+          events={events}
+          participantNames={participantNames}
+        />
       )}
 
       <section>
@@ -327,8 +150,15 @@ export function SessionDetailScreen() {
   const navigate = useNavigate();
   const adapter = useStorage();
   const { session, events, loading, error } = useSessionDetail(sessionId ?? '');
+  const { profiles } = useProfiles();
   const [discarding, setDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState<string | null>(null);
+
+  const participantNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const p of profiles) map[p.id] = p.name;
+    return map;
+  }, [profiles]);
 
   if (!sessionId) {
     navigate('/history', { replace: true });
@@ -394,7 +224,11 @@ export function SessionDetailScreen() {
       )}
 
       {!loading && !error && session && (
-        <SessionDetailContent session={session} events={events} />
+        <SessionDetailContent
+          session={session}
+          events={events}
+          participantNames={participantNames}
+        />
       )}
 
       {!loading && !error && !session && (
