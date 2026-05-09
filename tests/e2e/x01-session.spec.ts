@@ -59,7 +59,7 @@ test('x01 resume: leaving mid-turn restores working score', async ({ page }) => 
   await expect(page.getByTestId('x01-remaining')).toHaveText('441');
   await page.getByTestId('x01-quit').click();
 
-  await expect(page.getByTestId('resume-card')).toBeVisible();
+  await expect(page.getByTestId('in-progress-list')).toBeVisible();
   await page.getByRole('button', { name: /^resume$/i }).click();
   await expect(page.getByTestId('x01-remaining')).toHaveText('441');
 });
