@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { ImportResult } from '@/backup/import';
 import type { BackupManifest } from '@/domain/types';
 import { useBackup } from '@/hooks/useBackup';
+import { openTtnBackupRestore } from '@/lib/ttnBackup';
 
 type PendingImport = {
   manifest: BackupManifest;
@@ -123,6 +124,24 @@ export function DataSection() {
 
         <button
           type="button"
+          onClick={() => {
+            try {
+              openTtnBackupRestore();
+            } catch (err) {
+              setStatus({
+                kind: 'import-err',
+                message: err instanceof Error ? err.message : String(err)
+              });
+            }
+          }}
+          disabled={busy}
+          className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          Restore from ttn-backup
+        </button>
+
+        <button
+          type="button"
           onClick={() => setStatus({ kind: 'delete-confirm' })}
           disabled={busy}
           className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950"
@@ -130,6 +149,11 @@ export function DataSection() {
           {status.kind === 'deleting' ? 'Deleting…' : 'Delete all data'}
         </button>
       </div>
+
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        ttn-backup is a separate utility that snapshots all your TTN apps into one bundle on a schedule.{' '}
+        <a href="/ttn-backup/" className="underline">Open ttn-backup →</a>
+      </p>
 
       {status.kind === 'export-ok' && (
         <p role="status" className="mt-3 text-sm text-green-600 dark:text-green-400">

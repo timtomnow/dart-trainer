@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { installTtnBackupAdapter } from '@/lib/ttnBackup';
 import type { StorageAdapter } from '@/storage/adapter';
 import { DexieStorageAdapter } from '@/storage/dexie';
 import { requestPersistentStorageOnce } from '@/storage/persist';
@@ -29,6 +30,7 @@ export function StorageProvider({ children, adapter, fallback }: StorageProvider
       try {
         await instance.init();
         void requestPersistentStorageOnce();
+        installTtnBackupAdapter(instance);
         if (!cancelled) setReady(true);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err : new Error(String(err)));
