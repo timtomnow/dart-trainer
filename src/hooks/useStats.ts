@@ -1,13 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useStorage } from '@/app/providers/StorageProvider';
-import type { Session } from '@/domain/types';
+import { useMemo } from 'react';
+import { useFilteredSessionStats } from './useFilteredSessionStats';
 import { parseX01Config } from '@/games/x01/config';
-import { isCacheStale, sessionCacheKey, statsFromRecord, statsToRecord } from '@/stats/cache';
 import { computeSessionStats } from '@/stats/compute';
+import { DEFAULT_FILTER, type StatsFilter } from '@/stats/filter';
 import type { X01SessionStats } from '@/stats/types';
-
-const TREND_LIMIT = 20;
-const X01_TERMINAL: Array<Session['status']> = ['completed', 'forfeited'];
 
 export type TrendPoint = {
   sessionId: string;
@@ -31,7 +27,7 @@ export type UseStatsResult = {
   trend: TrendPoint[];
 };
 
-function aggregateSessionStats(all: X01SessionStats[]): AggregateStats | null {
+export function aggregateSessionStats(all: X01SessionStats[]): AggregateStats | null {
   if (all.length === 0) return null;
 
   const threeDartAvg = all.reduce((s, x) => s + x.threeDartAvg, 0) / all.length;
@@ -56,80 +52,52 @@ function aggregateSessionStats(all: X01SessionStats[]): AggregateStats | null {
     legsWon.length > 0 ? legsWon.reduce((m, x) => Math.min(m, x.shortestLeg!), Infinity) : null;
   const shortestLeg = rawShortest === Infinity ? null : rawShortest;
 
-  return { sessionCount: all.length, threeDartAvg, firstNineAvg, checkoutPct, total180s, highestCheckout, shortestLeg };
+  return {
+    sessionCount: all.length,
+    threeDartAvg,
+    firstNineAvg,
+    checkoutPct,
+    total180s,
+    highestCheckout,
+    shortestLeg
+  };
 }
 
-export function useStats(profileId: string | null): UseStatsResult {
-  const adapter = useStorage();
-  const [loading, setLoading] = useState(true);
-  const [aggregate, setAggregate] = useState<AggregateStats | null>(null);
-  const [trend, setTrend] = useState<TrendPoint[]>([]);
-
-  const load = useCallback(async () => {
-    if (!profileId) {
-      setLoading(false);
-      setAggregate(null);
-      setTrend([]);
-      return;
-    }
-
-    setLoading(true);
-
-    // newest-first from the adapter
-    const sessions = await adapter.listSessions({
-      gameModeId: 'x01',
-      status: X01_TERMINAL,
-      participantId: profileId
-    });
-
-    const recent = sessions.slice(0, TREND_LIMIT);
-
-    type Pair = { session: Session; stats: X01SessionStats };
-    const pairs: Pair[] = [];
-
-    for (const session of recent) {
+export function useStats(
+  profileId: string | null,
+  filter: StatsFilter = DEFAULT_FILTER,
+  gameModeId: 'x01' | 'x01vc' = 'x01'
+): UseStatsResult {
+  const { loading, pairs } = useFilteredSessionStats<X01SessionStats>(
+    gameModeId,
+    profileId,
+    filter,
+    (events, session) => {
       let config;
       try {
         config = parseX01Config(session.gameConfig);
       } catch {
-        continue;
+        return null;
       }
-
-      const events = await adapter.listEvents(session.id);
-      if (events.length === 0) continue;
-
-      const seqMax = events[events.length - 1]!.seq;
-      const cacheKey = sessionCacheKey(session.id);
-      const cached = await adapter.getDerivedStats('session', cacheKey);
-
-      if (!isCacheStale(cached, seqMax) && cached) {
-        const fromCache = statsFromRecord(cached);
-        if (fromCache) {
-          pairs.push({ session, stats: fromCache });
-          continue;
-        }
-      }
-
-      const stats = computeSessionStats(events, config, session);
-      pairs.push({ session, stats });
-      void adapter.putDerivedStats(statsToRecord(session.id, seqMax, stats));
+      return computeSessionStats(events, config, session);
     }
+  );
 
-    // trend: oldest → newest (left to right on chart)
-    const trendPoints: TrendPoint[] = [...pairs].reverse().map(({ session, stats }) => ({
-      sessionId: session.id,
-      startedAt: session.startedAt,
-      threeDartAvg: stats.threeDartAvg
-    }));
+  const aggregate = useMemo(
+    () => aggregateSessionStats(pairs.map((p) => p.stats)),
+    [pairs]
+  );
 
-    setAggregate(aggregateSessionStats(pairs.map((p) => p.stats)));
-    setTrend(trendPoints);
-    setLoading(false);
-  }, [adapter, profileId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  // oldest → newest for left-to-right charting
+  const trend = useMemo<TrendPoint[]>(
+    () =>
+      [...pairs].reverse().map(({ session, stats }) => ({
+        sessionId: session.id,
+        startedAt: session.startedAt,
+        threeDartAvg: stats.threeDartAvg
+      })),
+    [pairs]
+  );
 
   return { loading, aggregate, trend };
 }

@@ -11,6 +11,7 @@ export type UiPrefs = {
   keypadLayout?: KeypadLayout;
   lastQuotaHint?: string;
   quotaHintDismissedAt?: string;
+  statsFilter?: unknown;
 };
 
 export const UI_PREFS_EVENT = 'dt-ui-prefs-change';

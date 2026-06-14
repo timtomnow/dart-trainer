@@ -7,6 +7,7 @@ import { HomeScreen } from '@/screens/home';
 import { PlayScreen } from '@/screens/play';
 import { SettingsScreen } from '@/screens/settings';
 import { StatsScreen } from '@/screens/stats';
+import { GameStatsScreen } from '@/screens/stats/GameStatsScreen';
 import { AppShell } from '@/ui/shell/AppShell';
 
 export const router = createBrowserRouter(
@@ -25,6 +26,7 @@ export const router = createBrowserRouter(
         { path: 'history', element: <HistoryScreen /> },
         { path: 'history/:sessionId', element: <SessionDetailScreen /> },
         { path: 'stats', element: <StatsScreen /> },
+        { path: 'stats/:gameModeId', element: <GameStatsScreen /> },
         { path: 'settings', element: <SettingsScreen /> }
       ]
     }

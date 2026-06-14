@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "Stats" [ref=e7] [cursor=pointer]:
+          - /url: /dart-trainer/stats
+        - generic [ref=e8]: /
+        - generic [ref=e9]: X01
+      - heading "X01" [level=1] [ref=e10]
+      - group "Filter stats" [ref=e12]:
+        - button "All time" [pressed] [ref=e13]
+        - button "Past 30d" [ref=e14]
+        - button "Past year" [ref=e15]
+        - button "Custom" [ref=e16]
+        - button "Last N" [ref=e17]
+      - paragraph [ref=e19]: No sessions in this range. Play one, or widen the filter.
+  - navigation "Primary" [ref=e20]:
+    - link "Home" [ref=e21] [cursor=pointer]:
+      - /url: /dart-trainer
+    - link "Play" [ref=e22] [cursor=pointer]:
+      - /url: /dart-trainer/play
+    - link "History" [ref=e23] [cursor=pointer]:
+      - /url: /dart-trainer/history
+    - link "Stats" [ref=e24] [cursor=pointer]:
+      - /url: /dart-trainer/stats
+    - link "Settings" [ref=e25] [cursor=pointer]:
+      - /url: /dart-trainer/settings

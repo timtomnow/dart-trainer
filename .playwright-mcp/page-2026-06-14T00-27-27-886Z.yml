@@ -1,0 +1,41 @@
+- generic [ref=e12]:
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - heading "Stats" [level=1] [ref=e15]
+      - paragraph [ref=e16]: Pick a game to see its stats.
+      - generic [ref=e17]:
+        - link "X01 No sessions" [ref=e18] [cursor=pointer]:
+          - /url: /dart-trainer/stats/x01
+          - generic [ref=e19]: X01
+          - generic [ref=e20]: No sessions
+        - link "X01 vs Computer No sessions" [ref=e21] [cursor=pointer]:
+          - /url: /dart-trainer/stats/x01vc
+          - generic [ref=e22]: X01 vs Computer
+          - generic [ref=e23]: No sessions
+        - link "Cricket No sessions" [ref=e24] [cursor=pointer]:
+          - /url: /dart-trainer/stats/cricket
+          - generic [ref=e25]: Cricket
+          - generic [ref=e26]: No sessions
+        - link "Round the World No sessions" [ref=e27] [cursor=pointer]:
+          - /url: /dart-trainer/stats/rtw
+          - generic [ref=e28]: Round the World
+          - generic [ref=e29]: No sessions
+        - link "RTW Scoring No sessions" [ref=e30] [cursor=pointer]:
+          - /url: /dart-trainer/stats/rtw-scoring
+          - generic [ref=e31]: RTW Scoring
+          - generic [ref=e32]: No sessions
+        - link "Checkout Practice No sessions" [ref=e33] [cursor=pointer]:
+          - /url: /dart-trainer/stats/checkout
+          - generic [ref=e34]: Checkout Practice
+          - generic [ref=e35]: No sessions
+  - navigation "Primary" [ref=e36]:
+    - link "Home" [ref=e37] [cursor=pointer]:
+      - /url: /dart-trainer
+    - link "Play" [ref=e38] [cursor=pointer]:
+      - /url: /dart-trainer/play
+    - link "History" [ref=e39] [cursor=pointer]:
+      - /url: /dart-trainer/history
+    - link "Stats" [ref=e40] [cursor=pointer]:
+      - /url: /dart-trainer/stats
+    - link "Settings" [ref=e41] [cursor=pointer]:
+      - /url: /dart-trainer/settings

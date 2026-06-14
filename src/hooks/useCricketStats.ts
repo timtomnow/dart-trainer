@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useStorage } from '@/app/providers/StorageProvider';
-import type { Session } from '@/domain/types';
+import { useMemo } from 'react';
+import { useFilteredSessionStats } from './useFilteredSessionStats';
 import { parseCricketConfig } from '@/games/cricket/config';
 import { computeCricketStats } from '@/stats/cricketStats';
+import { DEFAULT_FILTER, type StatsFilter } from '@/stats/filter';
 import type { CricketSessionStats } from '@/stats/types';
-
-const LIMIT = 20;
-const TERMINAL: Array<Session['status']> = ['completed', 'forfeited'];
 
 export type CricketAggStats = {
   sessionCount: number;
@@ -26,48 +23,26 @@ function aggregate(all: CricketSessionStats[]): CricketAggStats | null {
   return { sessionCount: all.length, marksPerRound, totalMarks };
 }
 
-export function useCricketStats(profileId: string | null): UseCricketStatsResult {
-  const adapter = useStorage();
-  const [loading, setLoading] = useState(true);
-  const [agg, setAgg] = useState<CricketAggStats | null>(null);
-
-  const load = useCallback(async () => {
-    if (!profileId) {
-      setLoading(false);
-      setAgg(null);
-      return;
-    }
-
-    setLoading(true);
-
-    const sessions = await adapter.listSessions({
-      gameModeId: 'cricket',
-      status: TERMINAL,
-      participantId: profileId
-    });
-
-    const recent = sessions.slice(0, LIMIT);
-    const statsList: CricketSessionStats[] = [];
-
-    for (const session of recent) {
+export function useCricketStats(
+  profileId: string | null,
+  filter: StatsFilter = DEFAULT_FILTER
+): UseCricketStatsResult {
+  const { loading, pairs } = useFilteredSessionStats<CricketSessionStats>(
+    'cricket',
+    profileId,
+    filter,
+    (events, session) => {
       let config;
       try {
         config = parseCricketConfig(session.gameConfig);
       } catch {
-        continue;
+        return null;
       }
-      const events = await adapter.listEvents(session.id);
-      if (events.length === 0) continue;
-      statsList.push(computeCricketStats(events, config, session));
+      return computeCricketStats(events, config, session);
     }
+  );
 
-    setAgg(aggregate(statsList));
-    setLoading(false);
-  }, [adapter, profileId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const agg = useMemo(() => aggregate(pairs.map((p) => p.stats)), [pairs]);
 
   return { loading, aggregate: agg };
 }
