@@ -9,14 +9,9 @@ export { useActiveSession, type UseActiveSessionResult } from './useActiveSessio
 export { useSessions, type UseSessionsResult, type ListSessionsFilter } from './useSessions';
 export { useSessionEvents, type UseSessionEventsResult } from './useSessionEvents';
 export { useSessionDetail, type UseSessionDetailResult } from './useSessionDetail';
-export { useStats, type UseStatsResult, type AggregateStats, type TrendPoint } from './useStats';
 export { useKeypadLayout, type UseKeypadLayoutResult } from './useKeypadLayout';
 export { useUiPrefs, type UseUiPrefsResult, type UiFeedbackPrefs } from './useUiPrefs';
 export { useQuotaHint, checkQuotaAndMaybeFlag } from './useQuotaHint';
-export {
-  useCheckoutStats,
-  type UseCheckoutStatsResult,
-  type CheckoutAggStats
-} from './useCheckoutStats';
+export { useCheckoutStats, type UseCheckoutStatsResult } from './useCheckoutStats';
 export { useX01VCAutoPlay } from './useX01VCAutoPlay';
 export { useBackup } from './useBackup';

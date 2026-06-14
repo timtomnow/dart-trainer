@@ -835,6 +835,14 @@ export function PlayScreen() {
                   <button
                     type="button"
                     className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    onClick={() => setCheckoutConfig((c) => ({ ...c, finishes: [] }))}
+                    data-testid="checkout-select-none"
+                  >
+                    Select none
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 hover:underline dark:text-blue-400"
                     onClick={() => setCheckoutConfig((c) => ({ ...c, finishes: CHECKOUT_DEFAULT_CONFIG.finishes }))}
                   >
                     Reset

@@ -35,7 +35,9 @@ export function useFilteredSessionStats<T extends object>(
   gameModeId: string,
   profileId: string | null,
   filter: StatsFilter,
-  computeOne: (events: GameEvent[], session: Session) => T | null
+  computeOne: (events: GameEvent[], session: Session) => T | null,
+  /** Reject cache entries whose shape predates the current computeOne. */
+  isValidCached: (cached: T) => boolean = () => true
 ): UseFilteredSessionStatsResult<T> {
   const adapter = useStorage();
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,8 @@ export function useFilteredSessionStats<T extends object>(
 
   const computeRef = useRef(computeOne);
   computeRef.current = computeOne;
+  const validRef = useRef(isValidCached);
+  validRef.current = isValidCached;
 
   const filterKey = JSON.stringify(filter);
 
@@ -76,7 +80,7 @@ export function useFilteredSessionStats<T extends object>(
 
       if (!isCacheStale(cached, seqMax) && cached) {
         const fromCache = genericStatsFromRecord<T>(cached);
-        if (fromCache) {
+        if (fromCache && validRef.current(fromCache)) {
           result.push({ session, stats: fromCache });
           continue;
         }

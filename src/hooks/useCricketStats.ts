@@ -1,48 +1,39 @@
 import { useMemo } from 'react';
 import { useFilteredSessionStats } from './useFilteredSessionStats';
-import { parseCricketConfig } from '@/games/cricket/config';
-import { computeCricketStats } from '@/stats/cricketStats';
+import {
+  aggregateCricketDetail,
+  computeCricketDetail,
+  type CricketAggregate,
+  type CricketSessionData
+} from '@/stats/cricketDetail';
 import { DEFAULT_FILTER, type StatsFilter } from '@/stats/filter';
-import type { CricketSessionStats } from '@/stats/types';
-
-export type CricketAggStats = {
-  sessionCount: number;
-  marksPerRound: number;
-  totalMarks: number;
-};
 
 export type UseCricketStatsResult = {
   loading: boolean;
-  aggregate: CricketAggStats | null;
+  aggregate: CricketAggregate | null;
 };
 
-function aggregate(all: CricketSessionStats[]): CricketAggStats | null {
-  if (all.length === 0) return null;
-  const totalMarks = all.reduce((s, x) => s + x.totalMarks, 0);
-  const marksPerRound = all.reduce((s, x) => s + x.marksPerRound, 0) / all.length;
-  return { sessionCount: all.length, marksPerRound, totalMarks };
+function looksLikeDetail(cached: CricketSessionData): boolean {
+  return Array.isArray(cached.legs) && typeof cached.forfeited === 'boolean';
 }
 
 export function useCricketStats(
   profileId: string | null,
   filter: StatsFilter = DEFAULT_FILTER
 ): UseCricketStatsResult {
-  const { loading, pairs } = useFilteredSessionStats<CricketSessionStats>(
+  const { loading, pairs } = useFilteredSessionStats<CricketSessionData>(
     'cricket',
     profileId,
     filter,
-    (events, session) => {
-      let config;
-      try {
-        config = parseCricketConfig(session.gameConfig);
-      } catch {
-        return null;
-      }
-      return computeCricketStats(events, config, session);
-    }
+    (events, session) => computeCricketDetail(events, session),
+    looksLikeDetail
   );
 
-  const agg = useMemo(() => aggregate(pairs.map((p) => p.stats)), [pairs]);
+  const sessions = useMemo(() => pairs.map((p) => p.stats), [pairs]);
+  const aggregate = useMemo(
+    () => (profileId ? aggregateCricketDetail(sessions, profileId) : null),
+    [sessions, profileId]
+  );
 
-  return { loading, aggregate: agg };
+  return { loading, aggregate };
 }

@@ -14,9 +14,17 @@ type Props = {
   emptyHint: string;
   ariaLabel: string;
   format?: (value: number) => string;
+  /** Draw the formatted value at each point (and a tap/hover tooltip). */
+  showPointLabels?: boolean;
 };
 
-export function TrendChart({ points, emptyHint, ariaLabel, format = fmtAvg }: Props) {
+export function TrendChart({
+  points,
+  emptyHint,
+  ariaLabel,
+  format = fmtAvg,
+  showPointLabels = false
+}: Props) {
   if (points.length < 2) {
     return <p className="text-sm italic text-slate-500 dark:text-slate-400">{emptyHint}</p>;
   }
@@ -46,15 +54,40 @@ export function TrendChart({ points, emptyHint, ariaLabel, format = fmtAvg }: Pr
         strokeWidth="2"
         className="text-indigo-500"
       />
-      {points.map((p, i) => (
-        <circle key={p.sessionId || i} cx={toX(i)} cy={toY(p.value)} r="3" className="fill-indigo-500" />
-      ))}
-      <text x={PAD} y={CHART_H - 2} fontSize="9" className="fill-slate-400 dark:fill-slate-500">
-        {format(minY)}
-      </text>
-      <text x={PAD} y={PAD + 8} fontSize="9" className="fill-slate-400 dark:fill-slate-500">
-        {format(maxY)}
-      </text>
+      {points.map((p, i) => {
+        const cx = toX(i);
+        const cy = toY(p.value);
+        const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
+        const labelY = cy < 18 ? cy + 11 : cy - 5;
+        return (
+          <g key={p.sessionId || i}>
+            <circle cx={cx} cy={cy} r={showPointLabels ? 3.5 : 3} className="fill-indigo-500">
+              <title>{format(p.value)}</title>
+            </circle>
+            {showPointLabels && (
+              <text
+                x={cx}
+                y={labelY}
+                fontSize="9"
+                textAnchor={anchor}
+                className="fill-slate-600 dark:fill-slate-300"
+              >
+                {format(p.value)}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      {!showPointLabels && (
+        <>
+          <text x={PAD} y={CHART_H - 2} fontSize="9" className="fill-slate-400 dark:fill-slate-500">
+            {format(minY)}
+          </text>
+          <text x={PAD} y={PAD + 8} fontSize="9" className="fill-slate-400 dark:fill-slate-500">
+            {format(maxY)}
+          </text>
+        </>
+      )}
       <title>{`${ariaLabel} from ${format(minY)} to ${format(maxY)}`}</title>
     </svg>
   );
