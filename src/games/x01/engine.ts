@@ -283,6 +283,7 @@ function view(state: X01State): X01ViewModel {
   const lastClosedTurn = lastClosedInLeg
     ? {
         participantId: lastClosedInLeg.participantId,
+        indexInLeg: lastClosedInLeg.indexInLeg,
         scored: lastClosedInLeg.scored,
         bust: lastClosedInLeg.bust,
         checkout: lastClosedInLeg.checkout

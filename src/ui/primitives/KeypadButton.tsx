@@ -28,7 +28,9 @@ export function KeypadButton({
   return (
     <button
       type="button"
-      className={`flex min-h-[56px] items-center justify-center rounded-lg text-lg font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50 ${CLASSES[variant]} ${className}`}
+      style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+      onContextMenu={(e) => e.preventDefault()}
+      className={`flex min-h-[56px] touch-manipulation select-none items-center justify-center rounded-lg text-lg font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50 ${CLASSES[variant]} ${className}`}
       {...rest}
     >
       {children}

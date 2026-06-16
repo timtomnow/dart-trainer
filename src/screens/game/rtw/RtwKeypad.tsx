@@ -1,6 +1,6 @@
 import type { RtwMode } from '@/games/rtw';
 import type { UiFeedbackPrefs } from '@/hooks';
-import { dartFeedback } from '@/lib/feedback';
+import { dartFeedback, missFeedback } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Props = {
@@ -24,12 +24,14 @@ export function RtwKeypad({ mode, onGroupA, onGroupB, disabled, prefs }: Props) 
   };
 
   const handleGroupA = (hit: boolean) => {
-    fireFeedback();
+    if (!hit && prefs) missFeedback(prefs);
+    else fireFeedback();
     onGroupA(hit);
   };
 
   const handleGroupB = (hits: 0 | 1 | 2 | 3) => {
-    fireFeedback();
+    if (hits === 0 && prefs) missFeedback(prefs);
+    else fireFeedback();
     onGroupB(hits);
   };
 

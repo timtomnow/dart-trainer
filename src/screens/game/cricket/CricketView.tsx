@@ -9,6 +9,7 @@ import type { CricketAction, CricketViewModel } from '@/games/cricket';
 import { useUiPrefs } from '@/hooks';
 import { InGameSettings } from '@/screens/game/InGameSettings';
 import type { CricketParticipantStats } from '@/stats/types';
+import { useCelebration } from '@/ui/celebrate';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -42,6 +43,7 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
 
+  const { celebrate, node: celebrationNode } = useCelebration();
   const prevStatusRef = useRef(view.status);
 
   useEffect(() => {
@@ -49,11 +51,12 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
       const stats = computeLiveStats(view);
       setSessionEndData({ ...stats, participantStats: view.participantStats });
+      if (view.status === 'completed') celebrate('win', uiPrefs.sound);
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
     prevStatusRef.current = view.status;
-  }, [view]);
+  }, [view, celebrate, uiPrefs.sound]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -183,6 +186,8 @@ export function CricketView({ view, dispatch, undo, forfeit, onPlayAgain, partic
           onUndo={view.canUndo ? () => run(undo) : undefined}
         />
       )}
+
+      {celebrationNode}
     </section>
   );
 }

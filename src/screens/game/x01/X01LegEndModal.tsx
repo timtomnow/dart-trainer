@@ -54,7 +54,19 @@ export function X01LegEndModal({
           </button>
         </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+        <div
+          className="mt-4 flex items-baseline justify-between rounded-lg bg-blue-600/10 px-4 py-3 dark:bg-blue-500/15"
+          data-testid="x01-leg-darts"
+        >
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            Darts to finish
+          </span>
+          <span className="text-2xl font-bold tabular-nums text-blue-700 dark:text-blue-300">
+            {stats.dartsThrown}
+          </span>
+        </div>
+
+        <dl className="mt-3 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
           <div>
             <dt className="text-xs text-slate-500 dark:text-slate-400">3-dart avg</dt>
             <dd className="font-semibold tabular-nums">{fmt(stats.threeDartAvg)}</dd>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ThrowSegment } from '@/domain/types';
 import type { UiFeedbackPrefs } from '@/hooks';
-import { dartFeedback, vibrateTap } from '@/lib/feedback';
+import { dartFeedback, missFeedback, vibrateTap } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Multiplier = 'S' | 'D' | 'T';
@@ -37,7 +37,7 @@ export function CricketKeypad({ onDart, disabled, prefs }: Props) {
   };
 
   const pickMiss = () => {
-    fireFeedback();
+    if (prefs) missFeedback(prefs);
     onDart('MISS', 0);
     setMultiplier('S');
   };

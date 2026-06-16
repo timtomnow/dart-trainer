@@ -8,7 +8,9 @@ import type { ThrowSegment, GameEvent } from '@/domain/types';
 import type { X01Action, X01LegStats, X01ViewModel, X01LegSummary } from '@/games/x01';
 import type { X01VCConfig } from '@/games/x01vc';
 import { useKeypadLayout, useUiPrefs, useX01VCAutoPlay } from '@/hooks';
+import { playBust } from '@/lib/feedback';
 import { InGameSettings } from '@/screens/game/InGameSettings';
+import { useCelebration } from '@/ui/celebrate';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -52,9 +54,12 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
   const [legEndData, setLegEndData] = useState<LegEndData | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
 
+  const { celebrate, node: celebrationNode } = useCelebration();
+
   const prevLegIndexRef = useRef(view.legIndex);
   const prevStatusRef = useRef(view.status);
   const prevLegStatsRef = useRef<X01LegStats>(view.legStats);
+  const prevBustSigRef = useRef(`${view.legIndex}|${view.lastClosedTurn?.indexInLeg ?? -1}`);
 
   const computerParticipantId = config.computerParticipantId;
 
@@ -80,6 +85,9 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
 
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
       setSessionEndData({ stats: capturedStats, participantStats: view.participantStats, legSummaries: view.legSummaries });
+      if (view.status === 'completed' && view.winnerParticipantId === humanParticipantId) {
+        celebrate('win', uiPrefs.sound);
+      }
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
@@ -90,14 +98,24 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
         legsWon: view.legsWon,
         stats: capturedStats
       });
+      const lastLeg = view.legSummaries[view.legSummaries.length - 1];
+      if (lastLeg?.winnerParticipantId === humanParticipantId) {
+        celebrate('leg', uiPrefs.sound);
+      }
     } else if (view.legIndex < prevLegIndex) {
       setLegEndData(null);
     }
 
+    const bustSig = `${view.legIndex}|${view.lastClosedTurn?.indexInLeg ?? -1}`;
+    if (bustSig !== prevBustSigRef.current && view.lastClosedTurn?.bust) {
+      playBust(uiPrefs.sound);
+    }
+    prevBustSigRef.current = bustSig;
+
     prevLegIndexRef.current = view.legIndex;
     prevStatusRef.current = view.status;
     prevLegStatsRef.current = view.legStats;
-  }, [view]);
+  }, [view, celebrate, uiPrefs.sound, humanParticipantId]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -276,6 +294,8 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
           onUndo={view.canUndo ? () => run(undo) : undefined}
         />
       )}
+
+      {celebrationNode}
     </section>
   );
 }

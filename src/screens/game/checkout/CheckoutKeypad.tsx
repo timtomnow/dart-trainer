@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { KeypadLayout, ThrowSegment } from '@/domain/types';
 import type { CheckoutOutRule } from '@/games/checkout';
 import type { UiFeedbackPrefs } from '@/hooks';
-import { dartFeedback, vibrateTap } from '@/lib/feedback';
+import { dartFeedback, missFeedback, vibrateTap } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Multiplier = 'S' | 'D' | 'T';
@@ -47,7 +47,7 @@ export function CheckoutKeypad({ onDart, disabled, remainingInAttempt, outRule, 
   };
 
   const pickMiss = () => {
-    fireFeedback();
+    if (prefs) missFeedback(prefs);
     onDart('MISS', 0);
     setMultiplier('S');
   };
@@ -105,9 +105,12 @@ export function CheckoutKeypad({ onDart, disabled, remainingInAttempt, outRule, 
                       top: `${top}%`,
                       width: `${btnSize}%`,
                       height: `${btnSize}%`,
-                      transform: 'translate(-50%, -50%)'
+                      transform: 'translate(-50%, -50%)',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none'
                     }}
-                    className={`absolute flex items-center justify-center rounded-full text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`absolute flex touch-manipulation select-none items-center justify-center rounded-full text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
                       finisher
                         ? 'bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700'
                         : 'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700'
@@ -127,9 +130,12 @@ export function CheckoutKeypad({ onDart, disabled, remainingInAttempt, outRule, 
                   top: '50%',
                   width: `${BULL_BTN}%`,
                   height: `${BULL_BTN}%`,
-                  transform: 'translate(-50%, -50%)'
+                  transform: 'translate(-50%, -50%)',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
-                className={`absolute flex items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                onContextMenu={(e) => e.preventDefault()}
+                className={`absolute flex touch-manipulation select-none items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   isBullFinisher()
                     ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700'
                     : 'bg-amber-500 hover:bg-amber-400 active:bg-amber-600'
@@ -145,7 +151,9 @@ export function CheckoutKeypad({ onDart, disabled, remainingInAttempt, outRule, 
           <div className="flex flex-1 flex-col">
             <button
               type="button"
-              className="flex-1 rounded-lg bg-red-600 text-lg font-semibold text-white shadow-sm transition hover:bg-red-500 active:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700"
+              style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+              onContextMenu={(e) => e.preventDefault()}
+              className="flex-1 touch-manipulation select-none rounded-lg bg-red-600 text-lg font-semibold text-white shadow-sm transition hover:bg-red-500 active:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700"
               onClick={pickMiss}
               disabled={disabled}
               data-testid="checkout-miss"

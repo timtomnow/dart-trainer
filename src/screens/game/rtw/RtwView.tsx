@@ -4,6 +4,7 @@ import { RtwKeypad } from './RtwKeypad';
 import type { RtwAction, RtwViewModel } from '@/games/rtw';
 import { useUiPrefs } from '@/hooks';
 import { InGameSettings } from '@/screens/game/InGameSettings';
+import { useCelebration } from '@/ui/celebrate';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -38,15 +39,17 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participan
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
 
+  const { celebrate, node: celebrationNode } = useCelebration();
   const prevStatusRef = useRef(view.status);
   useEffect(() => {
     if (view.status !== 'in_progress' && prevStatusRef.current === 'in_progress') {
       setSessionDone(true);
+      if (view.status === 'completed') celebrate('win', uiPrefs.sound);
     } else if (view.status === 'in_progress' && prevStatusRef.current !== 'in_progress') {
       setSessionDone(false);
     }
     prevStatusRef.current = view.status;
-  }, [view.status]);
+  }, [view.status, celebrate, uiPrefs.sound]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -267,6 +270,8 @@ export function RtwView({ view, dispatch, undo, forfeit, onPlayAgain, participan
           </div>
         </div>
       )}
+
+      {celebrationNode}
     </section>
   );
 }

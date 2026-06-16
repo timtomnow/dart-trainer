@@ -101,6 +101,7 @@ export type X01ViewModel = {
   };
   lastClosedTurn: {
     participantId: string;
+    indexInLeg: number;
     scored: number;
     bust: boolean;
     checkout: boolean;

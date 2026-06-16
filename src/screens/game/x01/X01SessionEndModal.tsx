@@ -112,6 +112,10 @@ export function X01SessionEndModal({
                   </div>
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                     <div className="flex justify-between">
+                      <dt className="text-slate-500">Darts</dt>
+                      <dd className="font-semibold tabular-nums">{ps.dartsThrown}</dd>
+                    </div>
+                    <div className="flex justify-between">
                       <dt className="text-slate-500">Avg</dt>
                       <dd className="font-semibold tabular-nums">{fmt(ps.threeDartAvg)}</dd>
                     </div>
@@ -133,7 +137,19 @@ export function X01SessionEndModal({
             })}
           </div>
         ) : (
-          <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+          <>
+          <div
+            className="mt-4 flex items-baseline justify-between rounded-lg bg-blue-600/10 px-4 py-3 dark:bg-blue-500/15"
+            data-testid="x01-session-darts"
+          >
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              {status === 'forfeited' ? 'Darts at forfeit' : 'Darts to finish'}
+            </span>
+            <span className="text-2xl font-bold tabular-nums text-blue-700 dark:text-blue-300">
+              {stats.dartsThrown}
+            </span>
+          </div>
+          <dl className="mt-3 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
             <div>
               <dt className="text-xs text-slate-500 dark:text-slate-400">3-dart avg</dt>
               <dd className="font-semibold tabular-nums">{fmt(stats.threeDartAvg)}</dd>
@@ -153,6 +169,7 @@ export function X01SessionEndModal({
               <dd className="font-semibold tabular-nums">{stats.highestFinish || '—'}</dd>
             </div>
           </dl>
+          </>
         )}
 
         {error && (

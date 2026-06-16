@@ -4,6 +4,7 @@ import { RtwScoringKeypad } from './RtwScoringKeypad';
 import type { RtwScoringAction, RtwScoringMultiplier, RtwScoringViewModel } from '@/games/rtw-scoring';
 import { useUiPrefs } from '@/hooks';
 import { InGameSettings } from '@/screens/game/InGameSettings';
+import { useCelebration } from '@/ui/celebrate';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -38,15 +39,17 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
   const [actionError, setActionError] = useState<string | null>(null);
   const [sessionDone, setSessionDone] = useState(false);
 
+  const { celebrate, node: celebrationNode } = useCelebration();
   const prevStatusRef = useRef(view.status);
   useEffect(() => {
     if (view.status !== 'in_progress' && prevStatusRef.current === 'in_progress') {
       setSessionDone(true);
+      if (view.status === 'completed') celebrate('win', uiPrefs.sound);
     } else if (view.status === 'in_progress' && prevStatusRef.current !== 'in_progress') {
       setSessionDone(false);
     }
     prevStatusRef.current = view.status;
-  }, [view.status]);
+  }, [view.status, celebrate, uiPrefs.sound]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -237,6 +240,8 @@ export function RtwScoringView({ view, dispatch, undo, forfeit, onPlayAgain, par
           </div>
         </div>
       )}
+
+      {celebrationNode}
     </section>
   );
 }

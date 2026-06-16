@@ -1,6 +1,6 @@
 import type { RtwScoringMultiplier } from '@/games/rtw-scoring';
 import type { UiFeedbackPrefs } from '@/hooks';
-import { dartFeedback } from '@/lib/feedback';
+import { dartFeedback, missFeedback } from '@/lib/feedback';
 import { KeypadButton } from '@/ui/primitives';
 
 type Props = {
@@ -14,7 +14,10 @@ export function RtwScoringKeypad({ onThrow, disabled, currentTarget, prefs }: Pr
   const isTripleDisabled = disabled || currentTarget === 25;
 
   const handle = (m: RtwScoringMultiplier) => {
-    if (prefs) dartFeedback(prefs);
+    if (prefs) {
+      if (m === 'miss') missFeedback(prefs);
+      else dartFeedback(prefs);
+    }
     onThrow(m);
   };
 

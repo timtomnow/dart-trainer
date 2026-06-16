@@ -8,7 +8,9 @@ import { X01TurnStrip } from './X01TurnStrip';
 import type { ThrowSegment } from '@/domain/types';
 import type { X01Action, X01LegStats, X01ViewModel } from '@/games/x01';
 import { useKeypadLayout, useUiPrefs } from '@/hooks';
+import { playBust } from '@/lib/feedback';
 import { InGameSettings } from '@/screens/game/InGameSettings';
+import { useCelebration } from '@/ui/celebrate';
 import { RulesHelpButton } from '@/ui/help/RulesHelpButton';
 
 type Props = {
@@ -51,9 +53,12 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
   const [legEndData, setLegEndData] = useState<LegEndData | null>(null);
   const [sessionEndData, setSessionEndData] = useState<SessionEndData | null>(null);
 
+  const { celebrate, node: celebrationNode } = useCelebration();
+
   const prevLegIndexRef = useRef(view.legIndex);
   const prevStatusRef = useRef(view.status);
   const prevLegStatsRef = useRef<X01LegStats>(view.legStats);
+  const prevBustSigRef = useRef(`${view.legIndex}|${view.lastClosedTurn?.indexInLeg ?? -1}`);
 
   useEffect(() => {
     const prevLegIndex = prevLegIndexRef.current;
@@ -62,6 +67,7 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
 
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
       setSessionEndData({ stats: capturedStats, participantStats: view.participantStats });
+      if (view.status === 'completed') celebrate('win', uiPrefs.sound);
     } else if (view.status === 'in_progress' && prevStatus !== 'in_progress') {
       setSessionEndData(null);
     }
@@ -72,14 +78,21 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
         legsWon: view.legsWon,
         stats: capturedStats
       });
+      celebrate('leg', uiPrefs.sound);
     } else if (view.legIndex < prevLegIndex) {
       setLegEndData(null);
     }
 
+    const bustSig = `${view.legIndex}|${view.lastClosedTurn?.indexInLeg ?? -1}`;
+    if (bustSig !== prevBustSigRef.current && view.lastClosedTurn?.bust) {
+      playBust(uiPrefs.sound);
+    }
+    prevBustSigRef.current = bustSig;
+
     prevLegIndexRef.current = view.legIndex;
     prevStatusRef.current = view.status;
     prevLegStatsRef.current = view.legStats;
-  }, [view]);
+  }, [view, celebrate, uiPrefs.sound]);
 
   const run = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -218,6 +231,8 @@ export function X01View({ view, dispatch, undo, forfeit, onPlayAgain, participan
           onUndo={view.canUndo ? () => run(undo) : undefined}
         />
       )}
+
+      {celebrationNode}
     </section>
   );
 }
