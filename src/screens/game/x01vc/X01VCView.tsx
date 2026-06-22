@@ -58,7 +58,6 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
 
   const prevLegIndexRef = useRef(view.legIndex);
   const prevStatusRef = useRef(view.status);
-  const prevLegStatsRef = useRef<X01LegStats>(view.legStats);
   const prevBustSigRef = useRef(`${view.legIndex}|${view.lastClosedTurn?.indexInLeg ?? -1}`);
 
   const computerParticipantId = config.computerParticipantId;
@@ -81,7 +80,7 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
   useEffect(() => {
     const prevLegIndex = prevLegIndexRef.current;
     const prevStatus = prevStatusRef.current;
-    const capturedStats = prevLegStatsRef.current;
+    const capturedStats = view.lastCompletedLegStats ?? view.legStats;
 
     if (view.status !== 'in_progress' && prevStatus === 'in_progress') {
       setSessionEndData({ stats: capturedStats, participantStats: view.participantStats, legSummaries: view.legSummaries });
@@ -114,7 +113,6 @@ export function X01VCView({ view, dispatch, undo, forfeit, onPlayAgain, config, 
 
     prevLegIndexRef.current = view.legIndex;
     prevStatusRef.current = view.status;
-    prevLegStatsRef.current = view.legStats;
   }, [view, celebrate, uiPrefs.sound, humanParticipantId]);
 
   const run = async (fn: () => Promise<void>) => {

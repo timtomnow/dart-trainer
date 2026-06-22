@@ -109,6 +109,7 @@ export type X01ViewModel = {
   canUndo: boolean;
   winnerParticipantId?: string;
   legStats: X01LegStats;
+  lastCompletedLegStats?: X01LegStats;
   participantIds: string[];
   participantStats?: Record<string, X01LegStats>;
   participantRemaining: Record<string, number>;

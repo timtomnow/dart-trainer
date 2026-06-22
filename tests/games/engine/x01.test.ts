@@ -260,6 +260,18 @@ describe('x01Engine — legs + match progression', () => {
     expect(v.currentTurn.darts).toHaveLength(1);
   });
 
+  it('exposes the winning dart count via lastCompletedLegStats after a leg ends', () => {
+    const start = init({ startScore: 100, outRule: 'double', legsToWin: 2 });
+    const seeds = makeSeeds(seededIds(20, 99));
+    // T20 (60) leaves 40, D20 checks out: 2 darts to finish the leg.
+    const { state } = run(start, [t('T', 20), t('D', 20)], seeds);
+    const v = x01Engine.view(state);
+    expect(v.legIndex).toBe(1);
+    // Fresh leg has no darts yet; the completed leg's count is preserved separately.
+    expect(v.legStats.dartsThrown).toBe(0);
+    expect(v.lastCompletedLegStats?.dartsThrown).toBe(2);
+  });
+
   it('completes session when legsToWin is reached', () => {
     const start = init({ startScore: 40, outRule: 'double', legsToWin: 1 });
     const seeds = makeSeeds(seededIds(10, 18));

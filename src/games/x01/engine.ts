@@ -292,6 +292,13 @@ function view(state: X01State): X01ViewModel {
 
   const legStats = computeX01LegStats(activeLegForStats, activeId, state.config);
 
+  const lastCompletedLeg = [...state.legs]
+    .reverse()
+    .find((l) => l.winnerParticipantId !== undefined);
+  const lastCompletedLegStats = lastCompletedLeg
+    ? computeX01LegStats(lastCompletedLeg, lastCompletedLeg.winnerParticipantId!, state.config)
+    : undefined;
+
   const participantStats =
     sessionEnded && state.participantIds.length > 1
       ? computeParticipantStats(state.legs, state.participantIds, state.config)
@@ -331,6 +338,7 @@ function view(state: X01State): X01ViewModel {
     canUndo: state.inputEventLog.length > 0,
     winnerParticipantId: state.winnerParticipantId,
     legStats,
+    lastCompletedLegStats,
     participantIds: state.participantIds,
     participantStats,
     participantRemaining,
